@@ -1,0 +1,3 @@
+*.pyc
+.vscode
+src/tests/test_data

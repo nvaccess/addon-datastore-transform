@@ -30,4 +30,7 @@ jobs:
         flake8 --config=flake8.ini
     - name: Test with nose
       run: |
-        py -m nose -sv --traverse-namespace -w src/tests
+        python -m nose -sv --traverse-namespace -w src/tests
+    - name: Validate NVDAVersion.json
+      run: |
+        python src/validate/validate.py NVDAVersions.json
