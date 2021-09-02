@@ -1,14 +1,16 @@
 # transformAddonDataToViews
 Code to transform data so it can be accessed in nvaccess/addon-store-submission:views
 
-## Run tests
+## Setup
 ```sh
-python -m nose -sv --traverse-namespace -w src/tests
+pip install -r requirements.txt
 ```
 
-## Run linting
+## Run linting and tests
+[Tox](https://tox.readthedocs.io/) configures the environment, runs the tests and linting.
+
 ```sh
-python -m flake8 --config=flake8.ini
+tox
 ```
 
 ## NVDAVersions.json
