@@ -28,4 +28,4 @@ jobs:
       run: tox
     - name: Validate NVDAVersion.json
       run: |
-        python src/validate/validate.py NVDAVersions.json
+        python -m src.validate src/validate/NVDAVersions_schema.json NVDAVersions.json
