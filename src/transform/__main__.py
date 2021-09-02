@@ -5,20 +5,36 @@
 """
 Usage: python -m transform {nvdaVersionsPath} {inputPath} {outputPath} [logLevel]
 """
-
+import argparse
 import logging
 import sys
 from .transform import runTransformation
 
 log = logging.getLogger()
 
-nvdaVersionsPath = sys.argv[1]
-sourceDir = sys.argv[2]
-outputDir = sys.argv[3]
+parser = argparse.ArgumentParser()
+parser.add_argument(
+	dest="nvdaVersionsPath",
+	help="The path to the NVDAVersions.json, see README for full usage."
+)
+parser.add_argument(
+	dest="sourceDir",
+	help="The input directory, see README for full usage."
+)
+parser.add_argument(
+	dest="outputDir",
+	help="The output directory, see README for full usage."
+)
+parser.add_argument(
+	"--loglevel",
+	required=False,
+	help=f"The loglevel, one of {logging._nameToLevel}",
+	dest="loglevel",
+	default=logging.WARNING,
+)
+args = parser.parse_args()
+
 handler = logging.StreamHandler(sys.stdout)  # always log to stdout
-if len(sys.argv) == 5:
-	log.setLevel(sys.argv[4])
-else:
-	log.setLevel(logging.WARNING)
+log.setLevel(args.loglevel)
 log.addHandler(handler)
-runTransformation(nvdaVersionsPath, sourceDir, outputDir)
+runTransformation(args.nvdaVersionsPath, args.sourceDir, args.outputDir)
