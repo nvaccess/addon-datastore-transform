@@ -2,7 +2,6 @@
 # This file may be used under the terms of the GNU General Public License, version 2 or later.
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
-
 import glob
 import json
 import logging
@@ -18,12 +17,11 @@ from .datastructures import (
 	VersionCompatibility,
 	WriteableAddons
 )
-from validate.validate import (
+from src.validate.validate import (
 	ValidationError,
 	validateJson,
-	JSON_INPUT_SCHEMA,
-	JSON_VIEW_SCHEMA,
-	JSON_VERSION_SCHEMA,
+	JSON_ADDON_DATA_SCHEMA,
+	JSON_NVDA_VERSIONS_SCHEMA,
 )
 
 log = logging.getLogger()
@@ -83,10 +81,9 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 				addonWritePath = f"{addonDir}/{nvdaAPIVersion.toStr()}/{addonName}"
 				with open(addon.pathToData, "r") as oldAddonFile:
 					addonData = json.load(oldAddonFile)
-				addonData["version"] = addon.version.toJson()
 				Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 				with open(f"{addonWritePath}/{channel}.json", "w") as newAddonFile:
-					validateJson(addonData, JSON_VIEW_SCHEMA)
+					validateJson(addonData, JSON_ADDON_DATA_SCHEMA)
 					json.dump(addonData, newAddonFile)
 
 
@@ -113,7 +110,7 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 		with open(fileName, "r") as addonFile:
 			addonData = json.load(addonFile)
 		try:
-			validateJson(addonData, JSON_INPUT_SCHEMA)
+			validateJson(addonData, JSON_ADDON_DATA_SCHEMA)
 		except ValidationError as e:
 			log.error(f"{fileName} doesn't match schema: {e}")
 			continue
@@ -133,7 +130,7 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	"""
 	with open(pathToFile, "r") as NVDAVersionFile:
 		NVDAVersionData = json.load(NVDAVersionFile)
-	validateJson(NVDAVersionData, JSON_VERSION_SCHEMA)
+	validateJson(NVDAVersionData, JSON_NVDA_VERSIONS_SCHEMA)
 	return tuple(
 		VersionCompatibility(
 			nvdaVersion=NVDAVersion.fromStr(version["NVDAVersion"]),
@@ -144,12 +141,17 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 
 
 def emptyDirectory(dir: str) -> None:
-	for filename in glob.glob(dir + "/**", recursive=True):
+	for filename in glob.glob(dir + "/**/*.json", recursive=True):
 		if os.path.isfile(filename):
 			os.remove(filename)
 
 
 def runTransformation(nvdaVersionsPath: str, sourceDir: str, outputDir: str) -> None:
+	"""
+	Performs the transformation of addon data described in the readme.
+	Takes addon data found in sourceDir that fits the schema and writes the transformed data to outputDir.
+	Uses the NVDA API Versions found in nvdaVersionsPath.
+	"""
 	NVDAVersionInfo = readNVDAVersionInfo(nvdaVersionsPath)
 	latestAddons = getLatestAddons(readAddons(sourceDir), NVDAVersionInfo)
 	emptyDirectory(outputDir)

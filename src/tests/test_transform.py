@@ -3,9 +3,9 @@
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
 import re
-from transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
-from transform.transform import isAddonCompatible, getLatestAddons, addonInputPathSchema
-from tests.generateData import MockAddon
+from src.transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
+from src.transform.transform import isAddonCompatible, getLatestAddons, addonInputPathSchema
+from src.tests.generateData import MockAddon
 import unittest
 
 V_2020_1 = NVDAVersion(2020, 1)
@@ -24,7 +24,7 @@ nvdaVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1, V_2022_1)
 
 class Test_isAddonCompatible(unittest.TestCase):
 	def test_valid_with_api(self):
-		"""Confirm an addon is compatible"""
+		"""Confirm an addon is compatible with a fully tested API"""
 		addon = MockAddon()
 		addon.minNVDAVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2

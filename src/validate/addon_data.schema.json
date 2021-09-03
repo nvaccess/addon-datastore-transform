@@ -1,6 +1,11 @@
 {
 	"examples": [
 		{
+			"addonVersion": {
+				"major": 1,
+				"minor": 3,
+				"patch": 2
+			},
 			"displayName": "My addon",
 			"publisher": "easyAddonTech",
 			"description": "Makes doing XYZ easier",
@@ -34,10 +39,62 @@
 		"sha256",
 		"sourceURL",
 		"license",
-		"licenseURL"
+		"licenseURL",
+		"addonVersion"
 	],
 	"type": "object",
 	"properties": {
+		"addonVersion": {
+			"$id": "#/properties/addonVersion",
+			"default": {},
+			"description": "The addon version (major.minor[.patch]).",
+			"title": "The version number of the addon",
+			"examples": [
+				{
+					"major": 2,
+					"minor": 3,
+					"patch": 1
+				}
+			],
+			"required": [
+				"major",
+				"minor",
+				"patch"
+			],
+			"type": "object",
+			"properties": {
+				"major": {
+					"$id": "#/properties/addonVersion/properties/major",
+					"default": 0,
+					"description": "'major' in major.minor.patch",
+					"examples": [
+						2
+					],
+					"title": "The 'major' part of the version number.",
+					"type": "integer"
+				},
+				"minor": {
+					"$id": "#/properties/addonVersion/properties/minor",
+					"default": 0,
+					"description": "The 'minor' part in major.minor.patch",
+					"examples": [
+						3
+					],
+					"title": "The 'minor' part of the version number.",
+					"type": "integer"
+				},
+				"patch": {
+					"$id": "#/properties/addonVersion/properties/patch",
+					"default": 0,
+					"description": "The 'patch' part in major.minor.patch",
+					"examples": [
+						1
+					],
+					"title": "The 'patch' part of the version number.",
+					"type": "integer"
+				}
+			}
+		},
 		"displayName": {
 			"$id": "#/properties/displayName",
 			"default": "",

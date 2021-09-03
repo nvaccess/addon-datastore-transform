@@ -6,15 +6,11 @@ import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import os
-import sys
-import tempfile
 import typing
 
 
-JSON_INPUT_SCHEMA = os.path.join(os.path.dirname(__file__), "addonInput_schema.json")
-JSON_VIEW_SCHEMA = os.path.join(os.path.dirname(__file__), "addonView_schema.json")
-JSON_VERSION_SCHEMA = os.path.join(os.path.dirname(__file__), "NVDAVersions_schema.json")
-TEMP_DIR = tempfile.gettempdir()
+JSON_ADDON_DATA_SCHEMA = os.path.join(os.path.dirname(__file__), "addon_data.schema.json")
+JSON_NVDA_VERSIONS_SCHEMA = os.path.join(os.path.dirname(__file__), "NVDAVersions.schema.json")
 
 JsonObjT = typing.Dict[str, typing.Any]
 
@@ -29,13 +25,3 @@ def validateJson(data: JsonObjT, schemaPath: str) -> None:
 		validate(instance=data, schema=schema)
 	except ValidationError as err:
 		raise err
-
-
-if __name__ == "__main__":
-	"""Validate NVDAVersions file
-	Usage: python src/validate.py {nvdaVersionsPath}
-	"""
-	pathToFile = sys.argv[1]
-	with open(pathToFile, "r") as NVDAVersionFile:
-		NVDAVersionData = json.load(NVDAVersionFile)
-	validateJson(NVDAVersionData, JSON_VERSION_SCHEMA)

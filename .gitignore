@@ -1,3 +1,4 @@
 *.pyc
 .vscode
+.tox
 src/tests/test_data
