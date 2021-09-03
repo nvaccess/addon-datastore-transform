@@ -1,5 +1,5 @@
 # transformAddonDataToViews
-This repository primarily exists to transform data from [nvaccess/addon-store-submission](https://github.com/nvaccess/addon-store-submission) to views located at [nvaccess/addon-store-submission:views](https://github.com/nvaccess/addon-store-submission/tree/views).
+This repository primarily exists to transform data from [nvaccess/addon-store-submission:master](https://github.com/nvaccess/addon-store-submission) to views located at [nvaccess/addon-store-submission:views](https://github.com/nvaccess/addon-store-submission/tree/views).
 
 ## Overview
 
@@ -32,18 +32,19 @@ The expected input schema for each file can be found at [nvaccess/validateNvdaAd
 
 ### outputPath
 Expects a directory.
-WARNING: Empties all json data from the directory.
+- WARNING: Deletes all json data from the directory.
+   - This is so new data can be loaded.
 
 #### Output file structure
-Given the directory, the following subdirectories are created:
+Given the directory, the following subdirectories and files are created:
 - `/NVDA API Version/addon-1-ID/stable.json`
 - `/NVDA API Version/addon-1-ID/beta.json`
 - `/NVDA API Version/addon-2-ID/stable.json`
 eg: `/2020.3/nvdaOCR/stable.json`
 
 #### Output file data
-`beta.json` and `stable.json` addon files.
-The transformed data file schemas will be defined as the same as the input, with the API version added.
+Each addon file is the addon data taken from input that is the latest compatible version, with the given requirements `(NVDA API Version, addon-ID, stable|beta)`.
+The transformed data file content will be the same as the input.
 The contents for each addon file includes all the technical details required for NVDA to download, verify file integrity, and install.
 It also contains the information necessary for a store entry.
 Later, translated versions will become available.
