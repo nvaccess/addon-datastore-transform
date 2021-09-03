@@ -12,5 +12,5 @@ class Test_testExample(unittest.TestCase):
 	def test_example_pass(self):
 		pass
 
-	def test_example_fail(self):
-		self.assertTrue(False, "Example test failure")
+	# def test_example_fail(self):
+	# 	self.assertTrue(False, "Example test failure")
