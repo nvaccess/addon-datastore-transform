@@ -2,6 +2,7 @@
 # This file may be used under the terms of the GNU General Public License, version 2 or later.
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
+from enum import Enum
 import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -9,13 +10,15 @@ import os
 import typing
 
 
-JSON_ADDON_DATA_SCHEMA = os.path.join(os.path.dirname(__file__), "addon_data.schema.json")
-JSON_NVDA_VERSIONS_SCHEMA = os.path.join(os.path.dirname(__file__), "NVDAVersions.schema.json")
-
 JsonObjT = typing.Dict[str, typing.Any]
 
 
-def validateJson(data: JsonObjT, schemaPath: str) -> None:
+class JSONSchemaPaths(str, Enum):
+	ADDON_DATA = os.path.join(os.path.dirname(__file__), "addon_data.schema.json")
+	NVDA_VERSIONS = os.path.join(os.path.dirname(__file__), "NVDAVersions.schema.json")
+
+
+def validateJson(data: JsonObjT, schemaPath: JSONSchemaPaths) -> None:
 	""" Ensure that the loaded metadata conforms to the schema.
 	Raise error if not.
 	"""

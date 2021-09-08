@@ -20,8 +20,7 @@ from .datastructures import (
 from src.validate.validate import (
 	ValidationError,
 	validateJson,
-	JSON_ADDON_DATA_SCHEMA,
-	JSON_NVDA_VERSIONS_SCHEMA,
+	JSONSchemaPaths,
 )
 
 log = logging.getLogger()
@@ -83,7 +82,7 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 					addonData = json.load(oldAddonFile)
 				Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 				with open(f"{addonWritePath}/{channel}.json", "w") as newAddonFile:
-					validateJson(addonData, JSON_ADDON_DATA_SCHEMA)
+					validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
 					json.dump(addonData, newAddonFile)
 
 
@@ -110,7 +109,7 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 		with open(fileName, "r") as addonFile:
 			addonData = json.load(addonFile)
 		try:
-			validateJson(addonData, JSON_ADDON_DATA_SCHEMA)
+			validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
 		except ValidationError as e:
 			log.error(f"{fileName} doesn't match schema: {e}")
 			continue
@@ -130,7 +129,7 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	"""
 	with open(pathToFile, "r") as NVDAVersionFile:
 		NVDAVersionData = json.load(NVDAVersionFile)
-	validateJson(NVDAVersionData, JSON_NVDA_VERSIONS_SCHEMA)
+	validateJson(NVDAVersionData, JSONSchemaPaths.NVDA_VERSIONS)
 	return tuple(
 		VersionCompatibility(
 			nvdaVersion=NVDAVersion.fromStr(version["NVDAVersion"]),
