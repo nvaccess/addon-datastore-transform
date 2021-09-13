@@ -35,25 +35,8 @@ Expects a directory.
 - WARNING: Deletes all json data from the directory.
    - This is so new data can be loaded.
 
-#### Output file structure
-Given the directory, the following subdirectories and files are created:
-- `/NVDA API Version/addon-1-ID/stable.json`
-- `/NVDA API Version/addon-1-ID/beta.json`
-- `/NVDA API Version/addon-2-ID/stable.json`
-eg: `/2020.3/nvdaOCR/stable.json`
-
-#### Output file data
-Each addon file is the addon data taken from input that is the latest compatible version, with the given requirements `(NVDA API Version, addon-ID, stable|beta)`.
-The transformed data file content will be the same as the input.
-The contents for each addon file includes all the technical details required for NVDA to download, verify file integrity, and install.
-It also contains the information necessary for a store entry.
-Later, translated versions will become available.
-
-#### Output notes
-This structure simplifies the processing on the hosting (e.g. NV Access) server.
-To fetch the latest add-ons for `<NVDA API Version X>`, the server can concatenate the appropriate JSON files that match a glob: `/<NVDA API Version X>/*/stable.json`.
-Similarly, to fetch the latest version of an add-on with `<Addon-ID>` for `<NVDA API Version X>`. The server can return the data at `/<NVDA API Version X>/<addon-ID>/stable.json`.
-Using the NV Access server as the endpoint for this is important in case the implementation has to change or be migrated away from GitHub for some reason.
+Writes the output data to this directory.
+[Output documentation](./docs/output.md) describes how the data is structured and what it is used for.
 
 ## Run linting and tests
 [Tox](https://tox.readthedocs.io/) configures the environment, runs the tests and linting.
@@ -69,9 +52,16 @@ Data files can be validated using the following script:
 python -m src.validate {pathToSchema} {pathToDataFile}
 ```
 
-### NVDAVersions.json
+### Supported NVDA versions
 
-This file serves as source of truth for the NVDA versions and NVDA API versions supported by the views transformation.
+The transformation creates views using NVDA API Versions, as this will cover all releases of NVDA.
+Older versions of NVDA won't have the add-on store built in, but this data can be be browsed or rehosted elsewhere for earlier NVDA versions.
+
+For NVDA versions older than NVDA 2019.3, the NVDA API version is `0.0.0`.
+The next API version introduced was 2019.3 in the [NVDA commit 
+`899528849792e79b97d67de179f7473cee06b849`](https://github.com/nvaccess/nvda/commit/899528849792e79b97d67de179f7473cee06b849).
+
+`NVDAVersions.json` serves as source of truth for the NVDA versions and NVDA API versions supported by the views transformation.
 
 To validate this file, run the following:
 ```sh
