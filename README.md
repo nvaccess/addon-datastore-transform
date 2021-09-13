@@ -54,8 +54,7 @@ python -m src.validate {pathToSchema} {pathToDataFile}
 
 ### Supported NVDA versions
 
-Only versions since 2019.3 are currently supported
-
+Only versions since 2019.3 are currently supported.
 
 `NVDAVersions.json` serves as source of truth for the NVDA versions and NVDA API versions supported by the views transformation.
 
