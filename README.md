@@ -54,7 +54,12 @@ python -m src.validate {pathToSchema} {pathToDataFile}
 
 ### Supported NVDA versions
 
-Only versions since 2019.3 are currently supported.
+The transformation creates views using NVDA API Versions, as this will cover all releases of NVDA.
+Older versions of NVDA won't have the add-on store built in, but this data can be be browsed or rehosted elsewhere for earlier NVDA versions.
+
+For NVDA versions older than NVDA 2019.3, the NVDA API version is `0.0.0`.
+The next API version introduced was 2019.3 in the [NVDA commit 
+`899528849792e79b97d67de179f7473cee06b849`](https://github.com/nvaccess/nvda/commit/899528849792e79b97d67de179f7473cee06b849).
 
 `NVDAVersions.json` serves as source of truth for the NVDA versions and NVDA API versions supported by the views transformation.
 

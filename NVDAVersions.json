@@ -1,5 +1,10 @@
 [
 	{
+		"NVDAVersion": "2019.2",
+		"apiVer": "0.0.0",
+		"backCompatTo": "0.0.0"
+	},
+	{
 		"NVDAVersion": "2019.3",
 		"apiVer": "2019.3",
 		"backCompatTo": "2019.3"
