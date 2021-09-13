@@ -18,7 +18,7 @@ class JSONSchemaPaths(str, Enum):
 	NVDA_VERSIONS = os.path.join(os.path.dirname(__file__), "NVDAVersions.schema.json")
 
 
-def validateJson(data: JsonObjT, schemaPath: JSONSchemaPaths) -> None:
+def validateJson(data: JsonObjT, schemaPath: str) -> None:
 	""" Ensure that the loaded metadata conforms to the schema.
 	Raise error if not.
 	"""
