@@ -69,27 +69,18 @@ class _GenerateSystemTestData:
 
 	def write_mock_addon_to_files(self, addon: Addon, exceptedVersions: Iterable[NVDAVersion]):
 		addonData = {
-			"addonVersion": addon.version.toJson(),
-			"displayName": addon.name,
-			"description": "",
-			"homepage": f"https://example.com/{addon.name}",
-			"publisher": "nvdaexamples",
+			"addonId": addon.addonId,
+			"addonVersionNumber": addon.addonVersionNumber.toJson(),
 			"minNVDAVersion": addon.minNVDAVersion.toJson(),
 			"lastTestedVersion": addon.lastTestedVersion.toJson(),
 			"channel": addon.channel,
-			"URL": f"https://example.com/{addon.name}/{addon.version.toStr()}.nvda-addon",
-			"sha256-comment": f"SHA for the {addon.name}.nvda-addon file",
-			"sha256": "1234567BAC89FC24602245F4B8B750BCF2B72AFDF2DF54A0B07467FF4983F872",
-			"sourceURL": f"https://example.com/{addon.name}",
-			"license": "GPL v2",
-			"licenseURL": "https://www.gnu.org/licenses/gpl-2.0.html"
 		}
-		addonWritePath = f"{self.testSet.inputDir}/{addon.name}"
+		addonWritePath = f"{self.testSet.inputDir}/{addon.addonId}"
 		Path(addonWritePath).mkdir(parents=True, exist_ok=True)
-		with open(f"{addonWritePath}/{addon.version.toStr()}.json", "w") as addonFile:
+		with open(f"{addonWritePath}/{addon.addonVersionNumber.toStr()}.json", "w") as addonFile:
 			json.dump(addonData, addonFile, indent=4)
 		for nvdaVersion in exceptedVersions:
-			addonWritePath = f"{self.testSet.outputDir}/{nvdaVersion.toStr()}/{addon.name}"
+			addonWritePath = f"{self.testSet.outputDir}/{nvdaVersion.toStr()}/{addon.addonId}"
 			Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 			with open(f"{addonWritePath}/{addon.channel}.json", "w") as addonFile:
 				json.dump(addonData, addonFile, indent=4)
@@ -109,8 +100,8 @@ class _GenerateSystemTestData:
 		if self.testSet.id != 0:
 			return
 		addon = MockAddon()
-		addon.name = "fullyRemoved"
-		addon.version = AddonVersion(0, 1)
+		addon.addonId = "fullyRemoved"
+		addon.addonVersionNumber = AddonVersion(0, 1)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2021, 1)
 		addon.channel = "stable"
@@ -120,8 +111,8 @@ class _GenerateSystemTestData:
 		"""Creates addon data for an addon to be downgraded in subsequent datasets"""
 		# stable version
 		addon = MockAddon()
-		addon.name = "downgraded"
-		addon.version = AddonVersion(0, 9)
+		addon.addonId = "downgraded"
+		addon.addonVersionNumber = AddonVersion(0, 9)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2020, 4)
 		addon.channel = "stable"
@@ -133,8 +124,8 @@ class _GenerateSystemTestData:
 		if self.testSet.id == 0:
 			# version to be downgraded, removed in the second set
 			addon = MockAddon()
-			addon.name = "downgraded"
-			addon.version = AddonVersion(1, 1, 1)
+			addon.addonId = "downgraded"
+			addon.addonVersionNumber = AddonVersion(1, 1, 1)
 			addon.minNVDAVersion = NVDAVersion(2020, 3)
 			addon.lastTestedVersion = NVDAVersion(2021, 1)
 			addon.channel = "stable"
@@ -144,8 +135,8 @@ class _GenerateSystemTestData:
 		"""Creates addon data to test the newest available addon version is used"""
 		# legacy version, to remain unlisted
 		addon = MockAddon()
-		addon.name = "legacyOldNewAddon"
-		addon.version = AddonVersion(1, 9)
+		addon.addonId = "legacyOldNewAddon"
+		addon.addonVersionNumber = AddonVersion(1, 9)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2020, 2)
 		addon.channel = "stable"
@@ -153,8 +144,8 @@ class _GenerateSystemTestData:
 
 		# older version
 		addon = MockAddon()
-		addon.name = "legacyOldNewAddon"
-		addon.version = AddonVersion(2, 1)
+		addon.addonId = "legacyOldNewAddon"
+		addon.addonVersionNumber = AddonVersion(2, 1)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2020, 4)
 		addon.channel = "stable"
@@ -162,8 +153,8 @@ class _GenerateSystemTestData:
 
 		# newer version
 		addon = MockAddon()
-		addon.name = "legacyOldNewAddon"
-		addon.version = AddonVersion(13, 0)
+		addon.addonId = "legacyOldNewAddon"
+		addon.addonVersionNumber = AddonVersion(13, 0)
 		addon.minNVDAVersion = NVDAVersion(2020, 3)
 		addon.lastTestedVersion = NVDAVersion(2021, 1)
 		addon.channel = "stable"
@@ -176,8 +167,8 @@ class _GenerateSystemTestData:
 		"""Generates a beta addon for the first set, and the equivalent stable addon for the second
 		"""
 		addon = MockAddon()
-		addon.name = "betaToStable"
-		addon.version = AddonVersion(1, 1)
+		addon.addonId = "betaToStable"
+		addon.addonVersionNumber = AddonVersion(1, 1)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2020, 2)
 		addon.channel = "beta" if self.testSet.id == 0 else "stable"
@@ -187,8 +178,8 @@ class _GenerateSystemTestData:
 		"""Creates addon data to test that the newest addon is used across various NVDA versions"""
 		# older NVDA
 		addon = MockAddon()
-		addon.name = "testNVDAVersions"
-		addon.version = AddonVersion(1, 0)
+		addon.addonId = "testNVDAVersions"
+		addon.addonVersionNumber = AddonVersion(1, 0)
 		addon.minNVDAVersion = NVDAVersion(2020, 1)
 		addon.lastTestedVersion = NVDAVersion(2020, 3)
 		addon.channel = "stable"
@@ -196,8 +187,8 @@ class _GenerateSystemTestData:
 
 		# middle NVDA Versions
 		addon = MockAddon()
-		addon.name = "testNVDAVersions"
-		addon.version = AddonVersion(1, 1)
+		addon.addonId = "testNVDAVersions"
+		addon.addonVersionNumber = AddonVersion(1, 1)
 		addon.minNVDAVersion = NVDAVersion(2020, 2)
 		addon.lastTestedVersion = NVDAVersion(2020, 4)
 		addon.channel = "stable"
@@ -205,8 +196,8 @@ class _GenerateSystemTestData:
 
 		# newer NVDA versions
 		addon = MockAddon()
-		addon.name = "testNVDAVersions"
-		addon.version = AddonVersion(1, 2)
+		addon.addonId = "testNVDAVersions"
+		addon.addonVersionNumber = AddonVersion(1, 2)
 		addon.minNVDAVersion = NVDAVersion(2020, 3)
 		addon.lastTestedVersion = NVDAVersion(2021, 1)
 		addon.channel = "stable"
@@ -217,8 +208,8 @@ class _GenerateSystemTestData:
 
 		if self.testSet.id == 1:
 			addon = MockAddon()
-			addon.name = "testNVDAVersions"
-			addon.version = AddonVersion(1, 3)
+			addon.addonId = "testNVDAVersions"
+			addon.addonVersionNumber = AddonVersion(1, 3)
 			addon.minNVDAVersion = NVDAVersion(2021, 1)
 			addon.lastTestedVersion = NVDAVersion(2021, 2)
 			addon.channel = "stable"

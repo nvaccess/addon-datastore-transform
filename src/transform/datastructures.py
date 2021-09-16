@@ -66,12 +66,12 @@ class VersionCompatibility:
 
 @dataclass
 class Addon:
-	name: str  # set from source path
-	version: AddonVersion  # set from source path
-	pathToData: str  # set from source path
-	channel: AddonChannels  # read from data
-	minNVDAVersion: NVDAVersion  # read from data
-	lastTestedVersion: NVDAVersion  # read from data
+	addonId: str
+	addonVersionNumber: AddonVersion
+	pathToData: str
+	channel: AddonChannels
+	minNVDAVersion: NVDAVersion
+	lastTestedVersion: NVDAVersion
 
 
 AddonChannelDict = Dict[AddonChannels, Dict[str, Addon]]

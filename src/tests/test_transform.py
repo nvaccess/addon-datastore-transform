@@ -2,9 +2,8 @@
 # This file may be used under the terms of the GNU General Public License, version 2 or later.
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
-import re
 from src.transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
-from src.transform.transform import isAddonCompatible, getLatestAddons, addonInputPathSchema
+from src.transform.transform import getLatestAddons, _isAddonCompatible, _isAddonNewer
 from src.tests.generateData import MockAddon
 import unittest
 
@@ -28,28 +27,34 @@ class Test_isAddonCompatible(unittest.TestCase):
 		addon = MockAddon()
 		addon.minNVDAVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertTrue(isAddonCompatible(addon, nvdaVersion2020_2))
+		self.assertTrue(_isAddonCompatible(addon, nvdaVersion2020_2))
 
 	def test_valid_with_backwards_compatible_api(self):
 		"""Confirm an addon is compatible with a backwards compatible API"""
 		addon = MockAddon()
 		addon.minNVDAVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertTrue(isAddonCompatible(addon, nvdaVersion2020_3))
+		self.assertTrue(_isAddonCompatible(addon, nvdaVersion2020_3))
 
 	def test_not_valid_because_breaking_api(self):
 		"""Confirm an addon is not compatible with a breaking API"""
 		addon = MockAddon()
 		addon.minNVDAVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertFalse(isAddonCompatible(addon, nvdaVersion2021_1))
+		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2021_1))
 
 	def test_not_valid_because_old_api(self):
 		"""Confirm an addon is not compatible with an old API"""
 		addon = MockAddon()
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
-		self.assertFalse(isAddonCompatible(addon, nvdaVersion2020_3))
+		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2020_3))
+
+
+class Test_isAddonNewer(unittest.TestCase):
+	def test_is_newer(self):
+		_isAddonNewer
+		pass
 
 
 class Test_getLatestAddons(unittest.TestCase):
@@ -60,32 +65,32 @@ class Test_getLatestAddons(unittest.TestCase):
 		betaAddon.minNVDAVersion = V_2020_1
 		betaAddon.lastTestedVersion = V_2020_3
 		betaAddon.channel = "beta"
-		betaAddon.version = AddonVersion(0, 2, 1)
+		betaAddon.addonVersionNumber = AddonVersion(0, 2, 1)
 		stableAddon = MockAddon()
 		stableAddon.minNVDAVersion = V_2020_1
 		stableAddon.lastTestedVersion = V_2020_2
 		stableAddon.channel = "stable"
-		stableAddon.version = AddonVersion(0, 2)
+		stableAddon.addonVersionNumber = AddonVersion(0, 2)
 		self.assertDictEqual(getLatestAddons([betaAddon, stableAddon], NVDAVersions), {
-			V_2020_2: {"beta": {betaAddon.name: betaAddon}, "stable": {stableAddon.name: stableAddon}},
-			V_2020_3: {"beta": {betaAddon.name: betaAddon}, "stable": {stableAddon.name: stableAddon}},
+			V_2020_2: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
+			V_2020_3: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
 		})
 
 	def test_onlyNewerUsed(self):
 		"""Ensure only the newest addon is used for a version+channel"""
 		NVDAVersions = (nvdaVersion2020_2, nvdaVersion2020_3)
 		newAddon = MockAddon()
-		newAddon.name = "foo"
+		newAddon.addonId = "foo"
 		newAddon.minNVDAVersion = V_2020_1
 		newAddon.lastTestedVersion = V_2020_3
 		newAddon.channel = "beta"
-		newAddon.version = AddonVersion(0, 2)
+		newAddon.addonVersionNumber = AddonVersion(0, 2)
 		oldAddon = MockAddon()
-		oldAddon.name = "foo"
+		oldAddon.addonId = "foo"
 		oldAddon.minNVDAVersion = V_2020_1
 		oldAddon.lastTestedVersion = V_2020_2
 		oldAddon.channel = "beta"
-		oldAddon.version = AddonVersion(0, 1)
+		oldAddon.addonVersionNumber = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
 			V_2020_2: {"beta": {"foo": newAddon}, "stable": {}},
 			V_2020_3: {"beta": {"foo": newAddon}, "stable": {}},
@@ -100,7 +105,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		addon.channel = "beta"
 		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
 			V_2020_3: {"beta": {}, "stable": {}},
-			V_2021_1: {"beta": {addon.name: addon}, "stable": {}},
+			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 			V_2022_1: {"beta": {}, "stable": {}},
 		})
 
@@ -111,20 +116,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		addon.channel = "beta"
-		addon.version = AddonVersion(0, 1)
+		addon.addonVersionNumber = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
-			V_2021_1: {"beta": {addon.name: addon}, "stable": {}},
+			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 		})
-
-
-class TestReadAddons(unittest.TestCase):
-	def test_addonInputPathSchemaRegex(self):
-		"""Ensure the input path regex parses the naming schema correctly"""
-		m = re.match(addonInputPathSchema, "C:/user\\fooB312ard/exampleAddon/32.3.30.json")
-		self.assertDictEqual(m.groupdict(), {"name": "exampleAddon", "major": "32", "minor": "3", "patch": "30"})
-		m = re.match(addonInputPathSchema, "C:/test\\fooBa0321rd/exampleAddon/32.3.json")
-		self.assertDictEqual(m.groupdict(), {"name": "exampleAddon", "major": "32", "minor": "3", "patch": ""})
-		m = re.match(addonInputPathSchema, "C:/test\\fooBa0321rd/exampleAddon/32.3")
-		self.assertIsNone(m)
-		m = re.match(addonInputPathSchema, "C:/test\\fooBa0321rd/exampleAddon/test.json")
-		self.assertIsNone(m)

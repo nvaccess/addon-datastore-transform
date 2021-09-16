@@ -7,12 +7,11 @@ import json
 import logging
 import os
 from pathlib import Path
-import re
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, Tuple
 from .datastructures import (
-	generateAddonChannelDict,
-	Addon,
 	AddonVersion,
+	Addon,
+	generateAddonChannelDict,
 	NVDAVersion,
 	VersionCompatibility,
 	WriteableAddons
@@ -25,20 +24,19 @@ from src.validate.validate import (
 
 log = logging.getLogger()
 
-addonInputPathSchema = re.compile(
-	r"^.*/"  # parent path to addon directory
-	r"(?P<name>[^/]*)"  # name of addon
-	r"/(?P<major>[0-9]+)\.(?P<minor>[0-9]+)"  # version info
-	r"\.?(?P<patch>[0-9]*)"  # optional patch info
-	r"\.json$"  # file extension
-)
 
-
-def isAddonCompatible(addon: Addon, nvdaVersion: VersionCompatibility) -> bool:
+def _isAddonCompatible(addon: Addon, nvdaVersion: VersionCompatibility) -> bool:
 	"""
 	Confirms that the addon has been tested with an API version that the nvdaVersion is compatible with.
 	"""
 	return nvdaVersion.backCompatTo <= addon.lastTestedVersion and addon.minNVDAVersion <= nvdaVersion.apiVer
+
+
+def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
+	"""
+	Confirms that a given addon is newer than the most recent version of that addon in the addons dict.
+	"""
+	return addon.addonId not in addons or addon.addonVersionNumber > addons[addon.addonId].addonVersionNumber
 
 
 def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
@@ -53,18 +51,12 @@ def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatib
 	)
 	for addon in addons:
 		for nvdaVersion in NVDAVersions:
-			NVDAVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
-			if (
-				isAddonCompatible(addon, nvdaVersion)
-				and (
-					addon.name not in NVDAVersionChannel
-					or addon.version > NVDAVersionChannel[addon.name].version
-				)
-			):
-				NVDAVersionChannel[addon.name] = addon
-				log.debug(f"added {addon.name} {addon.version.toStr()}")
+			addonsForVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
+			if (_isAddonCompatible(addon, nvdaVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
+				addonsForVersionChannel[addon.addonId] = addon
+				log.debug(f"added {addon.addonId} {addon.addonVersionNumber.toStr()}")
 			else:
-				log.debug(f"ignoring {addon.name} {addon.version.toStr()}")
+				log.debug(f"ignoring {addon.addonId} {addon.addonVersionNumber.toStr()}")
 	return latestAddons
 
 
@@ -86,11 +78,6 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 					json.dump(addonData, newAddonFile)
 
 
-def normalizePathStyleToUnix(path: str) -> str:
-	"""Use to make regex and other string checks simpler and standardized."""
-	return path.replace("\\", "/")
-
-
 def readAddons(addonDir: str) -> Iterable[Addon]:
 	"""
 	Read addons from a directory and capture required data for processing.
@@ -98,14 +85,6 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 	Skips addons and logs errors if the naming schema or json schema do not match what is expected.
 	"""
 	for fileName in glob.glob(f"{addonDir}/**/*.json"):
-		fileName = normalizePathStyleToUnix(fileName)
-		addonPathMatch = re.match(addonInputPathSchema, fileName)
-		if addonPathMatch is None:
-			log.error(f"{fileName} doesn't match regex")
-			continue
-		addonData = addonPathMatch.groupdict()
-		addonName = addonData["name"]
-		addonVersion = AddonVersion.fromDict(addonData)
 		with open(fileName, "r") as addonFile:
 			addonData = json.load(addonFile)
 		try:
@@ -114,8 +93,8 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			log.error(f"{fileName} doesn't match schema: {e}")
 			continue
 		yield Addon(
-			name=addonName,
-			version=addonVersion,
+			addonId=addonData["addonId"],
+			addonVersionNumber=AddonVersion.fromDict(addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
 			minNVDAVersion=NVDAVersion.fromDict(addonData["minNVDAVersion"]),
