@@ -17,7 +17,7 @@ python -m src.transform {nvdaVersionsPath} {inputPath} {outputPath} [logLevel]
 ```
 
 ### nvdaVersionsPath
-A path to the NVDAVersions, see the schema: `src\validate\NVDAVersions_schema.json` and current values `NVDAVersions.json`.
+A path to the NVDAVersions, see the schema: `src\validate\NVDAVersions.schema.json` and current values `NVDAVersions.json`.
 This is an array of NVDA Versions, which include their NVDA API Version, and what API Version they are backwards compatible to.
 This allows us to list which versions an addon is compatible for.
 
@@ -65,5 +65,5 @@ The next API version introduced was 2019.3 in the [NVDA commit
 
 To validate this file, run the following:
 ```sh
-python -m src.validate src/validate/NVDAVersions_schema.json NVDAVersions.json
+python -m src.validate src/validate/NVDAVersions.schema.json NVDAVersions.json
 ```
