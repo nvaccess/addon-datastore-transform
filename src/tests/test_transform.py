@@ -3,7 +3,7 @@
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
 from src.transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
-from src.transform.transform import getLatestAddons, _isAddonCompatible, _isAddonNewer
+from src.transform.transform import getLatestAddons, _isAddonCompatible
 from src.tests.generateData import MockAddon
 import unittest
 
@@ -49,12 +49,6 @@ class Test_isAddonCompatible(unittest.TestCase):
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2020_3))
-
-
-class Test_isAddonNewer(unittest.TestCase):
-	def test_is_newer(self):
-		_isAddonNewer
-		pass
 
 
 class Test_getLatestAddons(unittest.TestCase):
