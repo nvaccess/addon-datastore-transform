@@ -96,8 +96,8 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			addonVersionNumber=AddonVersion(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
-			minNVDAVersion=NVDAVersion.fromDict(addonData["minNVDAVersion"]),
-			lastTestedVersion=NVDAVersion.fromDict(addonData["lastTestedVersion"]),
+			minNVDAVersion=NVDAVersion(**addonData["minNVDAVersion"]),
+			lastTestedVersion=NVDAVersion(**addonData["lastTestedVersion"]),
 		)
 
 

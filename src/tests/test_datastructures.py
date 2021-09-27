@@ -47,52 +47,50 @@ class TestNVDAVersion(unittest.TestCase):
 
 	def test_fromDict(self):
 		"""Test creating versions from dictionaries"""
-		self.assertEqual(NVDAVersion(2, 3, 4), NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "4",
+		self.assertEqual(NVDAVersion(2, 3, 4), NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
+			"patch": 4,
 		}))
-		self.assertEqual(NVDAVersion(2, 3, 0), NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "0",
+		self.assertEqual(NVDAVersion(2, 3, 0), NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
+			"patch": 0,
 		}))
-		self.assertEqual(NVDAVersion(2, 1), NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "1",
+		self.assertEqual(NVDAVersion(2, 1), NVDAVersion(**{
+			"major": 2,
+			"minor": 1,
 		}))
-		self.assertEqual(NVDAVersion(2, 3), NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "",
+		self.assertEqual(NVDAVersion(2, 3), NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
 		}))
 
 	def test_fromDict_throws(self):
 		"""Test creating versions from invalid dictionaries"""
-		with self.assertRaises(ValueError):
-			NVDAVersion.fromDict({
-				"major": "2.3",
-				"minor": "23",
+		with self.assertRaises(TypeError):
+			NVDAVersion(**{
+				"patch": 2,
+				"minor": 2,
 			})
 
 	def test_fromDictToStr(self):
 		"""Test creating versions from dictionaries preserves patch information to strings"""
-		self.assertEqual("2.3.0", NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "0",
+		self.assertEqual("2.3.0", NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
+			"patch": 0,
 		}).toStr())
-		self.assertEqual("2.1", NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "1",
+		self.assertEqual("2.1", NVDAVersion(**{
+			"major": 2,
+			"minor": 1,
 		}).toStr())
-		self.assertEqual("2.3.4", NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "4",
+		self.assertEqual("2.3.4", NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
+			"patch": 4,
 		}).toStr())
-		self.assertEqual("2.3", NVDAVersion.fromDict({
-			"major": "2",
-			"minor": "3",
-			"patch": "",
+		self.assertEqual("2.3", NVDAVersion(**{
+			"major": 2,
+			"minor": 3,
 		}).toStr())

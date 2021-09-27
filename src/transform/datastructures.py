@@ -3,7 +3,7 @@
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
 from dataclasses import dataclass
-from typing import Dict, Literal, NamedTuple, Optional, Union
+from typing import Dict, Literal, NamedTuple, Union
 
 # These values are validated using runtime validation -> see addon_data.schema.json
 AddonChannels = Literal["beta", "stable"]
@@ -22,20 +22,6 @@ class NVDAVersion(NamedTuple):
 	def fromStr(cls, version: str):
 		versionTuple = tuple(int(v) for v in version.split("."))
 		return cls(*versionTuple)
-
-	@classmethod
-	def fromDict(cls, version: Dict[str, Optional[str]]):
-		if "patch" in version and version["patch"]:
-			return cls(
-				int(version["major"]),
-				int(version["minor"]),
-				int(version["patch"]),
-			)
-		else:
-			return cls(
-				int(version["major"]),
-				int(version["minor"]),
-			)
 
 	def toStr(self):
 		patchStr = f".{self.patch}" if self.patch is not False else ""
