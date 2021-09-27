@@ -5,7 +5,6 @@
 import glob
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
 from .datastructures import (
@@ -118,19 +117,14 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	)
 
 
-def emptyDirectory(dir: str) -> None:
-	for filename in glob.glob(dir + "/**/*.json", recursive=True):
-		if os.path.isfile(filename):
-			os.remove(filename)
-
-
 def runTransformation(nvdaVersionsPath: str, sourceDir: str, outputDir: str) -> None:
 	"""
 	Performs the transformation of addon data described in the readme.
 	Takes addon data found in sourceDir that fits the schema and writes the transformed data to outputDir.
 	Uses the NVDA API Versions found in nvdaVersionsPath.
 	"""
+	# Make sure the director doesn't already exist so data isn't overwritten
+	Path(outputDir).mkdir(parents=True, exist_ok=False)
 	NVDAVersionInfo = readNVDAVersionInfo(nvdaVersionsPath)
 	latestAddons = getLatestAddons(readAddons(sourceDir), NVDAVersionInfo)
-	emptyDirectory(outputDir)
 	writeAddons(outputDir, latestAddons)
