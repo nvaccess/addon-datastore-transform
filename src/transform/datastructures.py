@@ -3,16 +3,15 @@
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
 from dataclasses import dataclass
-from typing import Dict, Literal, NamedTuple, Optional, OrderedDict, Union
+from typing import Dict, Literal, NamedTuple, Optional, Union
 
 AddonChannels = Literal["beta", "stable"]
 
 
-class MajorMinorPatch(NamedTuple):
-	""" The MajorMinorPatch datastructure is used by NVDAVersions and AddonVersions.
+class NVDAVersion(NamedTuple):
+	"""
 	Ensure that if a patch number is specified, it is preserved in strings, otherwised ignored.
 	For example NVDAVersion(2019, 1) should not end up creating paths like /2019.1.0/.
-	However, AddonVersion.fromStr("1.3.0") should preserve the patch number.
 	"""
 	major: int
 	minor: int
@@ -21,18 +20,18 @@ class MajorMinorPatch(NamedTuple):
 	@classmethod
 	def fromStr(cls, version: str):
 		versionTuple = tuple(int(v) for v in version.split("."))
-		return MajorMinorPatch(*versionTuple)
+		return cls(*versionTuple)
 
 	@classmethod
 	def fromDict(cls, version: Dict[str, Optional[str]]):
 		if "patch" in version and version["patch"]:
-			return MajorMinorPatch(
+			return cls(
 				int(version["major"]),
 				int(version["minor"]),
 				int(version["patch"]),
 			)
 		else:
-			return MajorMinorPatch(
+			return cls(
 				int(version["major"]),
 				int(version["minor"]),
 			)
@@ -41,20 +40,11 @@ class MajorMinorPatch(NamedTuple):
 		patchStr = f".{self.patch}" if self.patch is not False else ""
 		return f"{self.major}.{self.minor}{patchStr}"
 
-	def toJson(self) -> OrderedDict[str, int]:
-		return {
-			"major": self.major,
-			"minor": self.minor,
-			"patch": int(self.patch),  # ensure this is an int for json schema
-		}
 
-
-class NVDAVersion(MajorMinorPatch):
-	pass
-
-
-class AddonVersion(MajorMinorPatch):
-	pass
+class AddonVersion(NamedTuple):
+	major: int
+	minor: int
+	patch: int = 0
 
 
 @dataclass

@@ -3,7 +3,7 @@ This repository primarily exists to transform data from [nvaccess/addon-store-su
 
 ## Overview
 
-For each version of NVDA, the meta-data of the most recent (the highest version number) of each addon is automatically
+For each version of NVDA, the meta-data of the most recent (the highest version number) of each add-on is automatically
 added, based on the data in `addon-store-submission`.
 
 ## Setup

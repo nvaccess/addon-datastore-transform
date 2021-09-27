@@ -54,9 +54,9 @@ def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatib
 			addonsForVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
 			if (_isAddonCompatible(addon, nvdaVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
 				addonsForVersionChannel[addon.addonId] = addon
-				log.debug(f"added {addon.addonId} {addon.addonVersionNumber.toStr()}")
+				log.debug(f"added {addon.addonId} {addon.addonVersionNumber}")
 			else:
-				log.debug(f"ignoring {addon.addonId} {addon.addonVersionNumber.toStr()}")
+				log.debug(f"ignoring {addon.addonId} {addon.addonVersionNumber}")
 	return latestAddons
 
 
