@@ -5,6 +5,7 @@
 from dataclasses import dataclass
 from typing import Dict, Literal, NamedTuple, Optional, Union
 
+# These values are validated using runtime validation -> see addon_data.schema.json
 AddonChannels = Literal["beta", "stable"]
 
 
