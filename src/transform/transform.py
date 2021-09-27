@@ -35,7 +35,7 @@ def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
 	"""
 	Confirms that a given addon is newer than the most recent version of that addon in the addons dict.
 	"""
-	return addon.addonId not in addons or addon.addonVersionNumber > addons[addon.addonId].addonVersionNumber
+	return addon.addonId not in addons or addon.addonVersion > addons[addon.addonId].addonVersion
 
 
 def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
@@ -53,9 +53,9 @@ def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatib
 			addonsForVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
 			if (_isAddonCompatible(addon, nvdaVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
 				addonsForVersionChannel[addon.addonId] = addon
-				log.debug(f"added {addon.addonId} {addon.addonVersionNumber}")
+				log.debug(f"added {addon.addonId} {addon.addonVersion}")
 			else:
-				log.debug(f"ignoring {addon.addonId} {addon.addonVersionNumber}")
+				log.debug(f"ignoring {addon.addonId} {addon.addonVersion}")
 	return latestAddons
 
 
@@ -93,7 +93,7 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			continue
 		yield Addon(
 			addonId=addonData["addonId"],
-			addonVersionNumber=AddonVersion(**addonData["addonVersionNumber"]),
+			addonVersion=AddonVersion(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
 			minNVDAVersion=NVDAVersion(**addonData["minNVDAVersion"]),

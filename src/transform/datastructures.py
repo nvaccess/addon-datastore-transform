@@ -44,7 +44,7 @@ class VersionCompatibility:
 @dataclass
 class Addon:
 	addonId: str
-	addonVersionNumber: AddonVersion
+	addonVersion: AddonVersion
 	pathToData: str
 	channel: AddonChannels
 	minNVDAVersion: NVDAVersion

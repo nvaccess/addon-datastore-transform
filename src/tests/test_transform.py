@@ -62,7 +62,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		betaAddon.lastTestedVersion = V_2020_2
 		betaAddon.channel = "beta"
 		betaAddon.pathToData = "beta-path"  # unique identifier for addon metadata version
-		betaAddon.addonVersionNumber = AddonVersion(0, 2, 1)
+		betaAddon.addonVersion = AddonVersion(0, 2, 1)
 		stableAddon = deepcopy(betaAddon)
 		stableAddon.channel = "stable"
 		stableAddon.pathToData = "stable-path"  # unique identifier for addon metadata version
@@ -78,9 +78,9 @@ class Test_getLatestAddons(unittest.TestCase):
 		newAddon.minNVDAVersion = V_2020_1
 		newAddon.lastTestedVersion = V_2020_2
 		newAddon.channel = "beta"
-		newAddon.addonVersionNumber = AddonVersion(0, 2)
+		newAddon.addonVersion = AddonVersion(0, 2)
 		oldAddon = deepcopy(newAddon)
-		oldAddon.addonVersionNumber = AddonVersion(0, 1)
+		oldAddon.addonVersion = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
 			V_2020_2: {"beta": {"foo": newAddon}, "stable": {}},
 		})
@@ -105,7 +105,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		addon.channel = "beta"
-		addon.addonVersionNumber = AddonVersion(0, 1)
+		addon.addonVersion = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
 			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 		})
