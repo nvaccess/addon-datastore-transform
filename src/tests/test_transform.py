@@ -2,8 +2,10 @@
 # This file may be used under the terms of the GNU General Public License, version 2 or later.
 # For more details see: https://www.gnu.org/licenses/gpl-2.0.html
 
+from copy import deepcopy
+
 from src.transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
-from src.transform.transform import getLatestAddons, _isAddonCompatible, _isAddonNewer
+from src.transform.transform import getLatestAddons, _isAddonCompatible
 from src.tests.generateData import MockAddon
 import unittest
 
@@ -51,49 +53,36 @@ class Test_isAddonCompatible(unittest.TestCase):
 		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2020_3))
 
 
-class Test_isAddonNewer(unittest.TestCase):
-	def test_is_newer(self):
-		_isAddonNewer
-		pass
-
-
 class Test_getLatestAddons(unittest.TestCase):
 	def test_beta_stable(self):
 		"""Ensure addons are added to the correct channels"""
-		NVDAVersions = (nvdaVersion2020_2, nvdaVersion2020_3)
+		NVDAVersions = (nvdaVersion2020_2,)
 		betaAddon = MockAddon()
 		betaAddon.minNVDAVersion = V_2020_1
-		betaAddon.lastTestedVersion = V_2020_3
+		betaAddon.lastTestedVersion = V_2020_2
 		betaAddon.channel = "beta"
-		betaAddon.addonVersionNumber = AddonVersion(0, 2, 1)
-		stableAddon = MockAddon()
-		stableAddon.minNVDAVersion = V_2020_1
-		stableAddon.lastTestedVersion = V_2020_2
+		betaAddon.pathToData = "beta-path"  # unique identifier for addon metadata version
+		betaAddon.addonVersion = AddonVersion(0, 2, 1)
+		stableAddon = deepcopy(betaAddon)
 		stableAddon.channel = "stable"
-		stableAddon.addonVersionNumber = AddonVersion(0, 2)
+		stableAddon.pathToData = "stable-path"  # unique identifier for addon metadata version
 		self.assertDictEqual(getLatestAddons([betaAddon, stableAddon], NVDAVersions), {
 			V_2020_2: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
-			V_2020_3: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
 		})
 
 	def test_onlyNewerUsed(self):
 		"""Ensure only the newest addon is used for a version+channel"""
-		NVDAVersions = (nvdaVersion2020_2, nvdaVersion2020_3)
+		NVDAVersions = (nvdaVersion2020_2,)
 		newAddon = MockAddon()
 		newAddon.addonId = "foo"
 		newAddon.minNVDAVersion = V_2020_1
-		newAddon.lastTestedVersion = V_2020_3
+		newAddon.lastTestedVersion = V_2020_2
 		newAddon.channel = "beta"
-		newAddon.addonVersionNumber = AddonVersion(0, 2)
-		oldAddon = MockAddon()
-		oldAddon.addonId = "foo"
-		oldAddon.minNVDAVersion = V_2020_1
-		oldAddon.lastTestedVersion = V_2020_2
-		oldAddon.channel = "beta"
-		oldAddon.addonVersionNumber = AddonVersion(0, 1)
+		newAddon.addonVersion = AddonVersion(0, 2)
+		oldAddon = deepcopy(newAddon)
+		oldAddon.addonVersion = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
 			V_2020_2: {"beta": {"foo": newAddon}, "stable": {}},
-			V_2020_3: {"beta": {"foo": newAddon}, "stable": {}},
 		})
 
 	def test_some_in_range(self):
@@ -116,7 +105,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		addon.channel = "beta"
-		addon.addonVersionNumber = AddonVersion(0, 1)
+		addon.addonVersion = AddonVersion(0, 1)
 		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
 			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 		})

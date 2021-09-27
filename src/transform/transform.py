@@ -5,7 +5,6 @@
 import glob
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
 from .datastructures import (
@@ -36,7 +35,7 @@ def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
 	"""
 	Confirms that a given addon is newer than the most recent version of that addon in the addons dict.
 	"""
-	return addon.addonId not in addons or addon.addonVersionNumber > addons[addon.addonId].addonVersionNumber
+	return addon.addonId not in addons or addon.addonVersion > addons[addon.addonId].addonVersion
 
 
 def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
@@ -54,9 +53,9 @@ def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatib
 			addonsForVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
 			if (_isAddonCompatible(addon, nvdaVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
 				addonsForVersionChannel[addon.addonId] = addon
-				log.debug(f"added {addon.addonId} {addon.addonVersionNumber.toStr()}")
+				log.debug(f"added {addon.addonId} {addon.addonVersion}")
 			else:
-				log.debug(f"ignoring {addon.addonId} {addon.addonVersionNumber.toStr()}")
+				log.debug(f"ignoring {addon.addonId} {addon.addonVersion}")
 	return latestAddons
 
 
@@ -94,11 +93,11 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			continue
 		yield Addon(
 			addonId=addonData["addonId"],
-			addonVersionNumber=AddonVersion.fromDict(addonData["addonVersionNumber"]),
+			addonVersion=AddonVersion(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
-			minNVDAVersion=NVDAVersion.fromDict(addonData["minNVDAVersion"]),
-			lastTestedVersion=NVDAVersion.fromDict(addonData["lastTestedVersion"]),
+			minNVDAVersion=NVDAVersion(**addonData["minNVDAVersion"]),
+			lastTestedVersion=NVDAVersion(**addonData["lastTestedVersion"]),
 		)
 
 
@@ -118,19 +117,14 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	)
 
 
-def emptyDirectory(dir: str) -> None:
-	for filename in glob.glob(dir + "/**/*.json", recursive=True):
-		if os.path.isfile(filename):
-			os.remove(filename)
-
-
 def runTransformation(nvdaVersionsPath: str, sourceDir: str, outputDir: str) -> None:
 	"""
 	Performs the transformation of addon data described in the readme.
 	Takes addon data found in sourceDir that fits the schema and writes the transformed data to outputDir.
 	Uses the NVDA API Versions found in nvdaVersionsPath.
 	"""
+	# Make sure the director doesn't already exist so data isn't overwritten
+	Path(outputDir).mkdir(parents=True, exist_ok=False)
 	NVDAVersionInfo = readNVDAVersionInfo(nvdaVersionsPath)
 	latestAddons = getLatestAddons(readAddons(sourceDir), NVDAVersionInfo)
-	emptyDirectory(outputDir)
 	writeAddons(outputDir, latestAddons)

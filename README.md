@@ -3,7 +3,7 @@ This repository primarily exists to transform data from [nvaccess/addon-store-su
 
 ## Overview
 
-For each version of NVDA, the meta-data of the most recent (the highest version number) of each Addon is automatically
+For each version of NVDA, the meta-data of the most recent (the highest version number) of each add-on is automatically
 added, based on the data in `addon-store-submission`.
 
 ## Setup
@@ -31,9 +31,8 @@ As this repo consumes data from `nvaccess/addon-store-submission`, see [nvaccess
 The expected input schema for each file can be found at [nvaccess/validateNvdaAddonMetadata](https://github.com/nvaccess/validateNvdaAddonMetadata/blob/main/_validate/addonVersion_schema.json).
 
 ### outputPath
-Expects a directory.
-- WARNING: Deletes all json data from the directory.
-   - This is so new data can be loaded.
+Expects a path to a non-existent directory.
+Will create the path to that directory.
 
 Writes the output data to this directory.
 [Output documentation](./docs/output.md) describes how the data is structured and what it is used for.
