@@ -93,7 +93,7 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			continue
 		yield Addon(
 			addonId=addonData["addonId"],
-			addonVersionNumber=AddonVersion.fromDict(addonData["addonVersionNumber"]),
+			addonVersionNumber=AddonVersion(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
 			minNVDAVersion=NVDAVersion.fromDict(addonData["minNVDAVersion"]),
