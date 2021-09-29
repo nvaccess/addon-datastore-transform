@@ -1,24 +1,27 @@
 {
 	"type": "array",
-	"items": { "$ref": "#/$defs/NVDAVersionInfo" },
+	"items": { "$ref": "#/$defs/nvdaAPIVersionInfo" },
 	"$defs": {
-		"NVDAVersionInfo": {
+		"nvdaAPIVersionInfo": {
 			"required": [
+				"description",
 				"apiVer",
 				"backCompatTo"
 			],
-			"lastTestedVersion": {
-				"title": "The lastTestedVersion schema",
-				"description": "The add-on has been tested up to and including this version of NVDA"
-			},
 			"properties": {
+				"description": {
+					"$id": "#/$defs/nvdaAPIVersionInfo/properties/description",
+					"type": "string",
+					"title": "A description of the API version",
+					"example": "2021.1"
+				},
 				"apiVer": {
-					"$id": "#/$defs/NVDAVersionInfo/properties/apiVer",
+					"$id": "#/$defs/nvdaAPIVersionInfo/properties/apiVer",
 					"$ref": "#/$defs/canonicalVersion",
 					"title": "The NVDA API version number"
 				},
 				"backCompatTo": {
-					"$id": "#/$defs/NVDAVersionInfo/properties/backCompatTo",
+					"$id": "#/$defs/nvdaAPIVersionInfo/properties/backCompatTo",
 					"$ref": "#/$defs/canonicalVersion",
 					"title": "The API version this is backwards compatible to"
 				}

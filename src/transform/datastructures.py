@@ -30,7 +30,7 @@ class Addon:
 	addonVersion: MajorMinorPatch
 	pathToData: str
 	channel: AddonChannels
-	minNVDAVersion: MajorMinorPatch
+	minNvdaAPIVersion: MajorMinorPatch
 	lastTestedVersion: MajorMinorPatch
 
 

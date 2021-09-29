@@ -16,48 +16,48 @@ V_2021_1 = MajorMinorPatch(2021, 1)
 V_2021_1_1 = MajorMinorPatch(2021, 1, 1)
 V_2021_2 = MajorMinorPatch(2021, 2)
 V_2022_1 = MajorMinorPatch(2022, 1)
-nvdaVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_1)
-nvdaVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_1)
-nvdaVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1)
-nvdaVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1)
+nvdaAPIVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_1)
+nvdaAPIVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_1)
+nvdaAPIVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1)
+nvdaAPIVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1)
 
 
 class Test_isAddonCompatible(unittest.TestCase):
 	def test_valid_with_api(self):
 		"""Confirm an addon is compatible with a fully tested API"""
 		addon = MockAddon()
-		addon.minNVDAVersion = V_2020_1
+		addon.minNvdaAPIVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertTrue(_isAddonCompatible(addon, nvdaVersion2020_2))
+		self.assertTrue(_isAddonCompatible(addon, nvdaAPIVersion2020_2))
 
 	def test_valid_with_backwards_compatible_api(self):
 		"""Confirm an addon is compatible with a backwards compatible API"""
 		addon = MockAddon()
-		addon.minNVDAVersion = V_2020_1
+		addon.minNvdaAPIVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertTrue(_isAddonCompatible(addon, nvdaVersion2020_3))
+		self.assertTrue(_isAddonCompatible(addon, nvdaAPIVersion2020_3))
 
 	def test_not_valid_because_breaking_api(self):
 		"""Confirm an addon is not compatible with a breaking API"""
 		addon = MockAddon()
-		addon.minNVDAVersion = V_2020_1
+		addon.minNvdaAPIVersion = V_2020_1
 		addon.lastTestedVersion = V_2020_2
-		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2021_1))
+		self.assertFalse(_isAddonCompatible(addon, nvdaAPIVersion2021_1))
 
 	def test_not_valid_because_old_api(self):
 		"""Confirm an addon is not compatible with an old API"""
 		addon = MockAddon()
-		addon.minNVDAVersion = V_2021_1
+		addon.minNvdaAPIVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
-		self.assertFalse(_isAddonCompatible(addon, nvdaVersion2020_3))
+		self.assertFalse(_isAddonCompatible(addon, nvdaAPIVersion2020_3))
 
 
 class Test_getLatestAddons(unittest.TestCase):
 	def test_beta_stable(self):
 		"""Ensure addons are added to the correct channels"""
-		NVDAVersions = (nvdaVersion2020_2,)
+		nvdaAPIVersions = (nvdaAPIVersion2020_2,)
 		betaAddon = MockAddon()
-		betaAddon.minNVDAVersion = V_2020_1
+		betaAddon.minNvdaAPIVersion = V_2020_1
 		betaAddon.lastTestedVersion = V_2020_2
 		betaAddon.channel = "beta"
 		betaAddon.pathToData = "beta-path"  # unique identifier for addon metadata version
@@ -65,38 +65,38 @@ class Test_getLatestAddons(unittest.TestCase):
 		stableAddon = deepcopy(betaAddon)
 		stableAddon.channel = "stable"
 		stableAddon.pathToData = "stable-path"  # unique identifier for addon metadata version
-		self.assertDictEqual(getLatestAddons([betaAddon, stableAddon], NVDAVersions), {
+		self.assertDictEqual(getLatestAddons([betaAddon, stableAddon], nvdaAPIVersions), {
 			V_2020_2: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
 		})
 
 	def test_onlyNewerUsed(self):
 		"""Ensure only the newest addon is used for a version+channel"""
-		NVDAVersions = (nvdaVersion2020_2, nvdaVersion2020_3)
+		nvdaAPIVersions = (nvdaAPIVersion2020_2, nvdaAPIVersion2020_3)
 		oldAddon = MockAddon()
 		oldAddon.addonId = "foo"
-		oldAddon.minNVDAVersion = V_2020_2
+		oldAddon.minNvdaAPIVersion = V_2020_2
 		oldAddon.lastTestedVersion = V_2020_2
 		oldAddon.channel = "stable"
 		oldAddon.pathToData = "old-path"
 		oldAddon.addonVersion = MajorMinorPatch(0, 1)
 		newAddon = deepcopy(oldAddon)
 		newAddon.addonVersion = MajorMinorPatch(0, 2)
-		newAddon.minNVDAVersion = V_2020_3
+		newAddon.minNvdaAPIVersion = V_2020_3
 		newAddon.lastTestedVersion = V_2020_3
 		newAddon.pathToData = "new-path"
-		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
+		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], nvdaAPIVersions), {
 			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
 			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
 		})
 
 	def test_some_in_range(self):
-		"""Confirm that an addon is only added for the correct NVDAVersions"""
-		NVDAVersions = (nvdaVersion2020_3, nvdaVersion2021_1, nvdaVersion2022_1)
+		"""Confirm that an addon is only added for the correct nvdaAPIVersions"""
+		nvdaAPIVersions = (nvdaAPIVersion2020_3, nvdaAPIVersion2021_1, nvdaAPIVersion2022_1)
 		addon = MockAddon()
-		addon.minNVDAVersion = V_2021_1
+		addon.minNvdaAPIVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		addon.channel = "beta"
-		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
+		self.assertDictEqual(getLatestAddons([addon], nvdaAPIVersions), {
 			V_2020_3: {"beta": {}, "stable": {}},
 			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 			V_2022_1: {"beta": {}, "stable": {}},

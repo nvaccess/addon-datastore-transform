@@ -23,11 +23,14 @@ from src.validate.validate import (
 log = logging.getLogger()
 
 
-def _isAddonCompatible(addon: Addon, nvdaVersion: VersionCompatibility) -> bool:
+def _isAddonCompatible(addon: Addon, nvdaAPIVersion: VersionCompatibility) -> bool:
 	"""
-	Confirms that the addon has been tested with an API version that the nvdaVersion is compatible with.
+	Confirms that the addon has been tested with an API version that the nvdaAPIVersion is compatible with.
 	"""
-	return nvdaVersion.backCompatTo <= addon.lastTestedVersion and addon.minNVDAVersion <= nvdaVersion.apiVer
+	return (
+		nvdaAPIVersion.backCompatTo <= addon.lastTestedVersion
+		and addon.minNvdaAPIVersion <= nvdaAPIVersion.apiVer
+	)
 
 
 def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
@@ -37,20 +40,20 @@ def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
 	return addon.addonId not in addons or addon.addonVersion > addons[addon.addonId].addonVersion
 
 
-def getLatestAddons(addons: Iterable[Addon], NVDAVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
+def getLatestAddons(addons: Iterable[Addon], nvdaAPIVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
 	"""
 	Given a set of addons and NVDA versions, create a dictionary mapping each nvdaAPIVersion and channel
 	to the newest compatible addon.
 	"""
-	uniqueApiVersions = set(nvdaVersion.apiVer for nvdaVersion in NVDAVersions)
+	uniqueApiVersions = set(nvdaAPIVersion.apiVer for nvdaAPIVersion in nvdaAPIVersions)
 	latestAddons: WriteableAddons = dict(
 		(nvdaAPIVersion, generateAddonChannelDict())
 		for nvdaAPIVersion in uniqueApiVersions
 	)
 	for addon in addons:
-		for nvdaVersion in NVDAVersions:
-			addonsForVersionChannel = latestAddons[nvdaVersion.apiVer][addon.channel]
-			if (_isAddonCompatible(addon, nvdaVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
+		for nvdaAPIVersion in nvdaAPIVersions:
+			addonsForVersionChannel = latestAddons[nvdaAPIVersion.apiVer][addon.channel]
+			if (_isAddonCompatible(addon, nvdaAPIVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
 				addonsForVersionChannel[addon.addonId] = addon
 				log.debug(f"added {addon.addonId} {addon.addonVersion}")
 			else:
@@ -95,34 +98,34 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			addonVersion=MajorMinorPatch(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
-			minNVDAVersion=MajorMinorPatch(**addonData["minNVDAVersion"]),
+			minNvdaAPIVersion=MajorMinorPatch(**addonData["minNVDAVersion"]),
 			lastTestedVersion=MajorMinorPatch(**addonData["lastTestedVersion"]),
 		)
 
 
-def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
+def readnvdaAPIVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	"""
 	Reads and captures NVDA version information from file.
 	"""
-	with open(pathToFile, "r") as NVDAVersionFile:
-		NVDAVersionData = json.load(NVDAVersionFile)
-	validateJson(NVDAVersionData, JSONSchemaPaths.NVDA_VERSIONS)
+	with open(pathToFile, "r") as nvdaAPIVersionFile:
+		nvdaAPIVersionData = json.load(nvdaAPIVersionFile)
+	validateJson(nvdaAPIVersionData, JSONSchemaPaths.NVDA_VERSIONS)
 	return tuple(
 		VersionCompatibility(
 			apiVer=MajorMinorPatch(**version["apiVer"]),
 			backCompatTo=MajorMinorPatch(**version["backCompatTo"]),
-		) for version in NVDAVersionData
+		) for version in nvdaAPIVersionData
 	)
 
 
-def runTransformation(nvdaVersionsPath: str, sourceDir: str, outputDir: str) -> None:
+def runTransformation(nvdaAPIVersionsPath: str, sourceDir: str, outputDir: str) -> None:
 	"""
 	Performs the transformation of addon data described in the readme.
 	Takes addon data found in sourceDir that fits the schema and writes the transformed data to outputDir.
-	Uses the NVDA API Versions found in nvdaVersionsPath.
+	Uses the NVDA API Versions found in nvdaAPIVersionsPath.
 	"""
 	# Make sure the directory doesn't already exist so data isn't overwritten
 	Path(outputDir).mkdir(parents=True, exist_ok=False)
-	NVDAVersionInfo = readNVDAVersionInfo(nvdaVersionsPath)
-	latestAddons = getLatestAddons(readAddons(sourceDir), NVDAVersionInfo)
+	nvdaAPIVersionInfo = readnvdaAPIVersionInfo(nvdaAPIVersionsPath)
+	latestAddons = getLatestAddons(readAddons(sourceDir), nvdaAPIVersionInfo)
 	writeAddons(outputDir, latestAddons)
