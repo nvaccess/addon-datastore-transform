@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 import shutil
 from src.tests.generateData import MockAddon
-from src.transform.datastructures import Addon, AddonVersion, NVDAVersion, VersionCompatibility
+from src.transform.datastructures import Addon, MajorMinorPatch, VersionCompatibility
 from typing import Iterable, Tuple
 import subprocess
 import unittest
@@ -42,22 +42,22 @@ class _GenerateSystemTestData:
 
 	def __init__(self, testSet: TestSet) -> None:
 		self.testSet = testSet
-		self.testNVDAVersions = [
-			VersionCompatibility(NVDAVersion(2020, 1), NVDAVersion(2020, 1), NVDAVersion(2020, 1)),
-			VersionCompatibility(NVDAVersion(2020, 2), NVDAVersion(2020, 2), NVDAVersion(2020, 1)),
-			VersionCompatibility(NVDAVersion(2020, 3), NVDAVersion(2020, 3), NVDAVersion(2020, 1)),
-			VersionCompatibility(NVDAVersion(2020, 4), NVDAVersion(2020, 4), NVDAVersion(2020, 4)),
-			VersionCompatibility(NVDAVersion(2021, 1), NVDAVersion(2021, 1), NVDAVersion(2021, 1)),
+		self._test_nvdaAPIVersions = [
+			VersionCompatibility(MajorMinorPatch(2020, 1), MajorMinorPatch(2020, 1)),
+			VersionCompatibility(MajorMinorPatch(2020, 2), MajorMinorPatch(2020, 1)),
+			VersionCompatibility(MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 1)),
+			VersionCompatibility(MajorMinorPatch(2020, 4), MajorMinorPatch(2020, 4)),
+			VersionCompatibility(MajorMinorPatch(2021, 1), MajorMinorPatch(2021, 1)),
 		]
 		if self.testSet.id == 1:
-			self.testNVDAVersions.append(
-				VersionCompatibility(NVDAVersion(2021, 2), NVDAVersion(2021, 2), NVDAVersion(2021, 1))
+			self._test_nvdaAPIVersions.append(
+				VersionCompatibility(MajorMinorPatch(2021, 2), MajorMinorPatch(2021, 1))
 			)
 		if Path(self.testSet.inputDir).exists():
 			shutil.rmtree(self.testSet.inputDir)
 		if Path(self.testSet.outputDir).exists():
 			shutil.rmtree(self.testSet.outputDir)
-		self.writeNVDAVersions()
+		self.write_nvdaAPIVersions()
 
 	def generate_testData(self):
 		"""
@@ -67,13 +67,13 @@ class _GenerateSystemTestData:
 		self.test_addon_versions()
 		self.test_stable_from_beta()
 		self.test_addon_to_be_fully_removed()
-		self.test_NVDAVersions()
+		self.test_nvdaAPIVersions()
 
-	def write_mock_addon_to_files(self, addon: Addon, exceptedVersions: Iterable[NVDAVersion]):
+	def write_mock_addon_to_files(self, addon: Addon, exceptedVersions: Iterable[MajorMinorPatch]):
 		addonData = {
 			"addonId": addon.addonId,
 			"addonVersionNumber": addon.addonVersion._asdict(),
-			"minNVDAVersion": addon.minNVDAVersion._asdict(),
+			"minNVDAVersion": addon.minNvdaAPIVersion._asdict(),
 			"lastTestedVersion": addon.lastTestedVersion._asdict(),
 			"channel": addon.channel,
 		}
@@ -83,24 +83,23 @@ class _GenerateSystemTestData:
 			addonData["lastTestedVersion"]["patch"] = 0
 		addonWritePath = f"{self.testSet.inputDir}/{addon.addonId}"
 		Path(addonWritePath).mkdir(parents=True, exist_ok=True)
-		addonVersionStr = f"{addon.addonVersion.major}.{addon.addonVersion.minor}.{addon.addonVersion.patch}"
-		with open(f"{addonWritePath}/{addonVersionStr}.json", "w") as addonFile:
+		with open(f"{addonWritePath}/{str(addon.addonVersion)}.json", "w") as addonFile:
 			json.dump(addonData, addonFile, indent=4)
-		for nvdaVersion in exceptedVersions:
-			addonWritePath = f"{self.testSet.outputDir}/{nvdaVersion.toStr()}/{addon.addonId}"
+		for nvdaAPIVersion in exceptedVersions:
+			addonWritePath = f"{self.testSet.outputDir}/{str(nvdaAPIVersion)}/{addon.addonId}"
 			Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 			with open(f"{addonWritePath}/{addon.channel}.json", "w") as addonFile:
 				json.dump(addonData, addonFile, indent=4)
 
-	def writeNVDAVersions(self):
+	def write_nvdaAPIVersions(self):
 		Path(self.testSet.inputDir).mkdir(parents=True, exist_ok=True)
-		with open(f"{self.testSet.inputDir}/NVDAVersions.json", "w") as NVDAVersionFile:
-			nvdaVersionsJson = [{
-				"NVDAVersion": version.nvdaVersion.toStr(),
-				"apiVer": version.apiVer.toStr(),
-				"backCompatTo": version.backCompatTo.toStr(),
-			} for version in self.testNVDAVersions]
-			json.dump(nvdaVersionsJson, NVDAVersionFile)
+		with open(f"{self.testSet.inputDir}/nvdaAPIVersions.json", "w") as nvdaAPIVersionFile:
+			nvdaAPIVersionsJson = [{
+				"description": str(version.apiVer),
+				"apiVer": version.apiVer._asdict(),
+				"backCompatTo": version.backCompatTo._asdict(),
+			} for version in self._test_nvdaAPIVersions]
+			json.dump(nvdaAPIVersionsJson, nvdaAPIVersionFile)
 
 	def test_addon_to_be_fully_removed(self):
 		"""Creates addon data for an addon to be fully removed in subsequent datasets"""
@@ -108,66 +107,69 @@ class _GenerateSystemTestData:
 			return
 		addon = MockAddon()
 		addon.addonId = "fullyRemoved"
-		addon.addonVersion = AddonVersion(0, 1)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2021, 1)
+		addon.addonVersion = MajorMinorPatch(0, 1)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
 		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, [v.nvdaVersion for v in self.testNVDAVersions])
+		self.write_mock_addon_to_files(addon, [v.apiVer for v in self._test_nvdaAPIVersions])
 
 	def test_addon_to_be_downgraded(self):
 		"""Creates addon data for an addon to be downgraded in subsequent datasets"""
 		# stable version
 		addon = MockAddon()
 		addon.addonId = "downgraded"
-		addon.addonVersion = AddonVersion(0, 9)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2020, 4)
+		addon.addonVersion = MajorMinorPatch(0, 9)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 4)
 		addon.channel = "stable"
-		exceptedStableVersions = [NVDAVersion(2020, 1), NVDAVersion(2020, 2)]
+		exceptedStableVersions = [MajorMinorPatch(2020, 1), MajorMinorPatch(2020, 2)]
 		if self.testSet.id == 1:
-			exceptedStableVersions.extend((NVDAVersion(2020, 3), NVDAVersion(2020, 4)))
+			exceptedStableVersions.extend((MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4)))
 		self.write_mock_addon_to_files(addon, exceptedStableVersions)
 
 		if self.testSet.id == 0:
 			# version to be downgraded, removed in the second set
 			addon = MockAddon()
 			addon.addonId = "downgraded"
-			addon.addonVersion = AddonVersion(1, 1, 1)
-			addon.minNVDAVersion = NVDAVersion(2020, 3)
-			addon.lastTestedVersion = NVDAVersion(2021, 1)
+			addon.addonVersion = MajorMinorPatch(1, 1, 1)
+			addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
+			addon.lastTestedVersion = MajorMinorPatch(2021, 1)
 			addon.channel = "stable"
-			self.write_mock_addon_to_files(addon, {NVDAVersion(2020, 3), NVDAVersion(2020, 4), NVDAVersion(2021, 1)})
+			self.write_mock_addon_to_files(
+				addon,
+				{MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4), MajorMinorPatch(2021, 1)}
+			)
 
 	def test_addon_versions(self):
 		"""Creates addon data to test the newest available addon version is used"""
 		# legacy version, to remain unlisted
 		addon = MockAddon()
 		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = AddonVersion(1, 9)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2020, 2)
+		addon.addonVersion = MajorMinorPatch(1, 9)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 2)
 		addon.channel = "stable"
 		self.write_mock_addon_to_files(addon, set())
 
 		# older version
 		addon = MockAddon()
 		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = AddonVersion(2, 1)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2020, 4)
+		addon.addonVersion = MajorMinorPatch(2, 1)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 4)
 		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {NVDAVersion(2020, 1), NVDAVersion(2020, 2)})
+		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 1), MajorMinorPatch(2020, 2)})
 
 		# newer version
 		addon = MockAddon()
 		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = AddonVersion(13, 0)
-		addon.minNVDAVersion = NVDAVersion(2020, 3)
-		addon.lastTestedVersion = NVDAVersion(2021, 1)
+		addon.addonVersion = MajorMinorPatch(13, 0)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
+		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
 		addon.channel = "stable"
-		expectedVersions = {NVDAVersion(2020, 3), NVDAVersion(2020, 4), NVDAVersion(2021, 1)}
+		expectedVersions = {MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4), MajorMinorPatch(2021, 1)}
 		if self.testSet.id == 1:
-			expectedVersions.add(NVDAVersion(2021, 2))
+			expectedVersions.add(MajorMinorPatch(2021, 2))
 		self.write_mock_addon_to_files(addon, expectedVersions)
 
 	def test_stable_from_beta(self):
@@ -175,52 +177,55 @@ class _GenerateSystemTestData:
 		"""
 		addon = MockAddon()
 		addon.addonId = "betaToStable"
-		addon.addonVersion = AddonVersion(1, 1)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2020, 2)
+		addon.addonVersion = MajorMinorPatch(1, 1)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 2)
 		addon.channel = "beta" if self.testSet.id == 0 else "stable"
-		self.write_mock_addon_to_files(addon, {NVDAVersion(2020, 1), NVDAVersion(2020, 2), NVDAVersion(2020, 3)})
+		self.write_mock_addon_to_files(
+			addon,
+			{MajorMinorPatch(2020, 1), MajorMinorPatch(2020, 2), MajorMinorPatch(2020, 3)}
+		)
 
-	def test_NVDAVersions(self):
+	def test_nvdaAPIVersions(self):
 		"""Creates addon data to test that the newest addon is used across various NVDA versions"""
 		# older NVDA
 		addon = MockAddon()
-		addon.addonId = "testNVDAVersions"
-		addon.addonVersion = AddonVersion(1, 0)
-		addon.minNVDAVersion = NVDAVersion(2020, 1)
-		addon.lastTestedVersion = NVDAVersion(2020, 3)
+		addon.addonId = "_test_nvdaAPIVersions"
+		addon.addonVersion = MajorMinorPatch(1, 0)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 3)
 		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {NVDAVersion(2020, 1)})
+		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 1)})
 
 		# middle NVDA Versions
 		addon = MockAddon()
-		addon.addonId = "testNVDAVersions"
-		addon.addonVersion = AddonVersion(1, 1)
-		addon.minNVDAVersion = NVDAVersion(2020, 2)
-		addon.lastTestedVersion = NVDAVersion(2020, 4)
+		addon.addonId = "_test_nvdaAPIVersions"
+		addon.addonVersion = MajorMinorPatch(1, 1)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 2)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 4)
 		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {NVDAVersion(2020, 2)})
+		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 2)})
 
 		# newer NVDA versions
 		addon = MockAddon()
-		addon.addonId = "testNVDAVersions"
-		addon.addonVersion = AddonVersion(1, 2)
-		addon.minNVDAVersion = NVDAVersion(2020, 3)
-		addon.lastTestedVersion = NVDAVersion(2021, 1)
+		addon.addonId = "_test_nvdaAPIVersions"
+		addon.addonVersion = MajorMinorPatch(1, 2)
+		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
+		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
 		addon.channel = "stable"
-		expectedVersions = {NVDAVersion(2020, 3), NVDAVersion(2020, 4)}
+		expectedVersions = {MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4)}
 		if self.testSet.id == 0:
-			expectedVersions.add(NVDAVersion(2021, 1))
+			expectedVersions.add(MajorMinorPatch(2021, 1))
 		self.write_mock_addon_to_files(addon, expectedVersions)
 
 		if self.testSet.id == 1:
 			addon = MockAddon()
-			addon.addonId = "testNVDAVersions"
-			addon.addonVersion = AddonVersion(1, 3)
-			addon.minNVDAVersion = NVDAVersion(2021, 1)
-			addon.lastTestedVersion = NVDAVersion(2021, 2)
+			addon.addonId = "_test_nvdaAPIVersions"
+			addon.addonVersion = MajorMinorPatch(1, 3)
+			addon.minNvdaAPIVersion = MajorMinorPatch(2021, 1)
+			addon.lastTestedVersion = MajorMinorPatch(2021, 2)
 			addon.channel = "stable"
-			self.write_mock_addon_to_files(addon, (NVDAVersion(2021, 1), NVDAVersion(2021, 2)))
+			self.write_mock_addon_to_files(addon, (MajorMinorPatch(2021, 1), MajorMinorPatch(2021, 2)))
 
 
 class TestTransformation(unittest.TestCase):
@@ -241,9 +246,9 @@ class TestTransformation(unittest.TestCase):
 	def _execute_transformation(cls, testSet: TestSet):
 		if Path(TEST_OUTPUT_DIR).exists():
 			shutil.rmtree(TEST_OUTPUT_DIR)
-		nvdaVersionsPath = f"{testSet.inputDir}/NVDAVersions.json"
+		nvdaAPIVersionsPath = f"{testSet.inputDir}/nvdaAPIVersions.json"
 		process = subprocess.run(
-			f"python -m src.transform {nvdaVersionsPath} {testSet.inputDir} {TEST_OUTPUT_DIR}",
+			f"python -m src.transform {nvdaAPIVersionsPath} {testSet.inputDir} {TEST_OUTPUT_DIR}",
 			shell=True
 		)
 		process.check_returncode()
