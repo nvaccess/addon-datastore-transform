@@ -19,7 +19,6 @@ V_2022_1 = MajorMinorPatch(2022, 1)
 nvdaVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_1)
 nvdaVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_1)
 nvdaVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1)
-nvdaVersion2021_1_1 = VersionCompatibility(V_2021_1, V_2021_1)
 nvdaVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1)
 
 
@@ -101,16 +100,4 @@ class Test_getLatestAddons(unittest.TestCase):
 			V_2020_3: {"beta": {}, "stable": {}},
 			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 			V_2022_1: {"beta": {}, "stable": {}},
-		})
-
-	def test_nvda_versions_shared_api_version(self):
-		"""Ensure that two NVDA versions that have the same API version only create one entry"""
-		NVDAVersions = (nvdaVersion2021_1, nvdaVersion2021_1_1)
-		addon = MockAddon()
-		addon.minNVDAVersion = V_2021_1
-		addon.lastTestedVersion = V_2021_2
-		addon.channel = "beta"
-		addon.addonVersion = MajorMinorPatch(0, 1)
-		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
-			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 		})
