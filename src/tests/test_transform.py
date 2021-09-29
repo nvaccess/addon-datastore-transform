@@ -72,17 +72,22 @@ class Test_getLatestAddons(unittest.TestCase):
 
 	def test_onlyNewerUsed(self):
 		"""Ensure only the newest addon is used for a version+channel"""
-		NVDAVersions = (nvdaVersion2020_2,)
-		newAddon = MockAddon()
-		newAddon.addonId = "foo"
-		newAddon.minNVDAVersion = V_2020_1
-		newAddon.lastTestedVersion = V_2020_2
-		newAddon.channel = "beta"
-		newAddon.addonVersion = MajorMinorPatch(0, 2)
-		oldAddon = deepcopy(newAddon)
+		NVDAVersions = (nvdaVersion2020_2, nvdaVersion2020_3)
+		oldAddon = MockAddon()
+		oldAddon.addonId = "foo"
+		oldAddon.minNVDAVersion = V_2020_2
+		oldAddon.lastTestedVersion = V_2020_2
+		oldAddon.channel = "stable"
+		oldAddon.pathToData = "old-path"
 		oldAddon.addonVersion = MajorMinorPatch(0, 1)
+		newAddon = deepcopy(oldAddon)
+		newAddon.addonVersion = MajorMinorPatch(0, 2)
+		newAddon.minNVDAVersion = V_2020_3
+		newAddon.lastTestedVersion = V_2020_3
+		newAddon.pathToData = "new-path"
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
-			V_2020_2: {"beta": {"foo": newAddon}, "stable": {}},
+			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
+			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
 		})
 
 	def test_some_in_range(self):
