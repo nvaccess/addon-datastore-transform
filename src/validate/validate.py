@@ -15,7 +15,7 @@ JsonObjT = typing.Dict[str, typing.Any]
 
 class JSONSchemaPaths(str, Enum):
 	ADDON_DATA = os.path.join(os.path.dirname(__file__), "addon_data.schema.json")
-	NVDA_VERSIONS = os.path.join(os.path.dirname(__file__), "NVDAVersions.schema.json")
+	NVDA_VERSIONS = os.path.join(os.path.dirname(__file__), "nvdaAPIVersions.schema.json")
 
 
 def validateJson(data: JsonObjT, schemaPath: str) -> None:
