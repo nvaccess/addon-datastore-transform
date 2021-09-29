@@ -4,23 +4,23 @@
 
 from copy import deepcopy
 
-from src.transform.datastructures import AddonVersion, NVDAVersion, VersionCompatibility
+from src.transform.datastructures import MajorMinorPatch, VersionCompatibility
 from src.transform.transform import getLatestAddons, _isAddonCompatible
 from src.tests.generateData import MockAddon
 import unittest
 
-V_2020_1 = NVDAVersion(2020, 1)
-V_2020_2 = NVDAVersion(2020, 2)
-V_2020_3 = NVDAVersion(2020, 3)
-V_2021_1 = NVDAVersion(2021, 1)
-V_2021_1_1 = NVDAVersion(2021, 1, 1)
-V_2021_2 = NVDAVersion(2021, 2)
-V_2022_1 = NVDAVersion(2022, 1)
-nvdaVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_2, V_2020_1)
-nvdaVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_3, V_2020_1)
-nvdaVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1, V_2021_1)
-nvdaVersion2021_1_1 = VersionCompatibility(V_2021_1_1, V_2021_1, V_2021_1)
-nvdaVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1, V_2022_1)
+V_2020_1 = MajorMinorPatch(2020, 1)
+V_2020_2 = MajorMinorPatch(2020, 2)
+V_2020_3 = MajorMinorPatch(2020, 3)
+V_2021_1 = MajorMinorPatch(2021, 1)
+V_2021_1_1 = MajorMinorPatch(2021, 1, 1)
+V_2021_2 = MajorMinorPatch(2021, 2)
+V_2022_1 = MajorMinorPatch(2022, 1)
+nvdaVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_1)
+nvdaVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_1)
+nvdaVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1)
+nvdaVersion2021_1_1 = VersionCompatibility(V_2021_1, V_2021_1)
+nvdaVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1)
 
 
 class Test_isAddonCompatible(unittest.TestCase):
@@ -62,7 +62,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		betaAddon.lastTestedVersion = V_2020_2
 		betaAddon.channel = "beta"
 		betaAddon.pathToData = "beta-path"  # unique identifier for addon metadata version
-		betaAddon.addonVersion = AddonVersion(0, 2, 1)
+		betaAddon.addonVersion = MajorMinorPatch(0, 2, 1)
 		stableAddon = deepcopy(betaAddon)
 		stableAddon.channel = "stable"
 		stableAddon.pathToData = "stable-path"  # unique identifier for addon metadata version
@@ -78,9 +78,9 @@ class Test_getLatestAddons(unittest.TestCase):
 		newAddon.minNVDAVersion = V_2020_1
 		newAddon.lastTestedVersion = V_2020_2
 		newAddon.channel = "beta"
-		newAddon.addonVersion = AddonVersion(0, 2)
+		newAddon.addonVersion = MajorMinorPatch(0, 2)
 		oldAddon = deepcopy(newAddon)
-		oldAddon.addonVersion = AddonVersion(0, 1)
+		oldAddon.addonVersion = MajorMinorPatch(0, 1)
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], NVDAVersions), {
 			V_2020_2: {"beta": {"foo": newAddon}, "stable": {}},
 		})
@@ -105,7 +105,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		addon.minNVDAVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
 		addon.channel = "beta"
-		addon.addonVersion = AddonVersion(0, 1)
+		addon.addonVersion = MajorMinorPatch(0, 1)
 		self.assertDictEqual(getLatestAddons([addon], NVDAVersions), {
 			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
 		})

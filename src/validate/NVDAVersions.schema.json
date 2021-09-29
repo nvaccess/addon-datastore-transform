@@ -3,63 +3,71 @@
 	"items": { "$ref": "#/$defs/NVDAVersionInfo" },
 	"$defs": {
 		"NVDAVersionInfo": {
-			"examples": [
-				{
-					"NVDAVersion": "2019.3",
-					"apiVer": "2019.3",
-					"backCompatTo": "2019.3"
-				},
-				{
-					"NVDAVersion": "2020.1",
-					"apiVer": "2020.1",
-					"backCompatTo": "2019.3"
-				},
-				{
-					"NVDAVersion": "2020.1.1",
-					"apiVer": "2020.1",
-					"backCompatTo": "2019.3"
-				},
-				{
-					"NVDAVersion": "2021.1",
-					"apiVer": "2021.1",
-					"backCompatTo": "2021.1"
-				}
-			],
 			"required": [
-				"NVDAVersion",
 				"apiVer",
 				"backCompatTo"
 			],
+			"lastTestedVersion": {
+				"title": "The lastTestedVersion schema",
+				"description": "The add-on has been tested up to and including this version of NVDA"
+			},
 			"properties": {
-				"NVDAVersion": {
-					"$id": "#/$defs/NVDAVersionInfo/properties/NVDAVersion",
-					"type": "string",
-					"description": "The NVDA version (major.minor[.patch]).",
-					"title": "The NVDA version number",
-					"examples": [
-						"2020.1",
-						"2021.1.1"
-					]
-				},
 				"apiVer": {
 					"$id": "#/$defs/NVDAVersionInfo/properties/apiVer",
-					"type": "string",
-					"description": "The NVDA API version that this NVDA version uses (major.minor[.patch]).",
-					"title": "The NVDA API version number",
-					"examples": [
-						"2020.1",
-						"2021.1.1"
-					]
+					"$ref": "#/$defs/canonicalVersion",
+					"title": "The NVDA API version number"
 				},
 				"backCompatTo": {
 					"$id": "#/$defs/NVDAVersionInfo/properties/backCompatTo",
-					"type": "string",
-					"description": "The NVDA API version that this NVDA version is backwards compatible to (major.minor[.patch]).",
-					"title": "The backwards compatibility API version",
+					"$ref": "#/$defs/canonicalVersion",
+					"title": "The API version this is backwards compatible to"
+				}
+			}
+		},
+		"canonicalVersion": {
+			"default": {},
+			"type": "object",
+			"examples": [
+				{
+					"major": 21,
+					"minor": 6,
+					"patch": 0
+				}
+			],
+			"required": [
+				"major",
+				"minor",
+				"patch"
+			],
+			"properties": {
+				"major": {
+					"default": 0,
+					"description": "'major' in major.minor.patch",
 					"examples": [
-						"2020.1",
-						"2021.1.1"
-					]
+						21,
+						2019,
+						2021
+					],
+					"title": "The 'major' part of the version number.",
+					"type": "integer"
+				},
+				"minor": {
+					"default": 0,
+					"description": "The 'minor' part in major.minor.patch",
+					"examples": [
+						3
+					],
+					"title": "The 'minor' part of the version number.",
+					"type": "integer"
+				},
+				"patch": {
+					"default": 0,
+					"description": "The 'patch' part in major.minor.patch",
+					"examples": [
+						0
+					],
+					"title": "The 'patch' part of the version number.",
+					"type": "integer"
 				}
 			}
 		}

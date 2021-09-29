@@ -8,10 +8,9 @@ import logging
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
 from .datastructures import (
-	AddonVersion,
 	Addon,
 	generateAddonChannelDict,
-	NVDAVersion,
+	MajorMinorPatch,
 	VersionCompatibility,
 	WriteableAddons
 )
@@ -68,7 +67,7 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 		for channel in addons[nvdaAPIVersion]:
 			for addonName in addons[nvdaAPIVersion][channel]:
 				addon = addons[nvdaAPIVersion][channel][addonName]
-				addonWritePath = f"{addonDir}/{nvdaAPIVersion.toStr()}/{addonName}"
+				addonWritePath = f"{addonDir}/{str(nvdaAPIVersion)}/{addonName}"
 				with open(addon.pathToData, "r") as oldAddonFile:
 					addonData = json.load(oldAddonFile)
 				Path(addonWritePath).mkdir(parents=True, exist_ok=True)
@@ -93,11 +92,11 @@ def readAddons(addonDir: str) -> Iterable[Addon]:
 			continue
 		yield Addon(
 			addonId=addonData["addonId"],
-			addonVersion=AddonVersion(**addonData["addonVersionNumber"]),
+			addonVersion=MajorMinorPatch(**addonData["addonVersionNumber"]),
 			pathToData=fileName,
 			channel=addonData["channel"],
-			minNVDAVersion=NVDAVersion(**addonData["minNVDAVersion"]),
-			lastTestedVersion=NVDAVersion(**addonData["lastTestedVersion"]),
+			minNVDAVersion=MajorMinorPatch(**addonData["minNVDAVersion"]),
+			lastTestedVersion=MajorMinorPatch(**addonData["lastTestedVersion"]),
 		)
 
 
@@ -110,9 +109,8 @@ def readNVDAVersionInfo(pathToFile: str) -> Tuple[VersionCompatibility]:
 	validateJson(NVDAVersionData, JSONSchemaPaths.NVDA_VERSIONS)
 	return tuple(
 		VersionCompatibility(
-			nvdaVersion=NVDAVersion.fromStr(version["NVDAVersion"]),
-			apiVer=NVDAVersion.fromStr(version["apiVer"]),
-			backCompatTo=NVDAVersion.fromStr(version["backCompatTo"]),
+			apiVer=MajorMinorPatch(**version["apiVer"]),
+			backCompatTo=MajorMinorPatch(**version["backCompatTo"]),
 		) for version in NVDAVersionData
 	)
 
