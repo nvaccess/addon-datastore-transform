@@ -121,7 +121,7 @@ def runTransformation(nvdaVersionsPath: str, sourceDir: str, outputDir: str) -> 
 	Takes addon data found in sourceDir that fits the schema and writes the transformed data to outputDir.
 	Uses the NVDA API Versions found in nvdaVersionsPath.
 	"""
-	# Make sure the director doesn't already exist so data isn't overwritten
+	# Make sure the directory doesn't already exist so data isn't overwritten
 	Path(outputDir).mkdir(parents=True, exist_ok=False)
 	NVDAVersionInfo = readNVDAVersionInfo(nvdaVersionsPath)
 	latestAddons = getLatestAddons(readAddons(sourceDir), NVDAVersionInfo)
