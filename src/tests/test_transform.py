@@ -19,6 +19,7 @@ V_2022_1 = MajorMinorPatch(2022, 1)
 nvdaAPIVersion2020_2 = VersionCompatibility(V_2020_2, V_2020_1)
 nvdaAPIVersion2020_3 = VersionCompatibility(V_2020_3, V_2020_1)
 nvdaAPIVersion2021_1 = VersionCompatibility(V_2021_1, V_2021_1)
+nvdaAPIVersion2021_2 = VersionCompatibility(V_2021_2, V_2021_1)
 nvdaAPIVersion2022_1 = VersionCompatibility(V_2022_1, V_2022_1)
 
 
@@ -89,15 +90,38 @@ class Test_getLatestAddons(unittest.TestCase):
 			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
 		})
 
-	def test_some_in_range(self):
-		"""Confirm that an addon is only added for the correct nvdaAPIVersions"""
-		nvdaAPIVersions = (nvdaAPIVersion2020_3, nvdaAPIVersion2021_1, nvdaAPIVersion2022_1)
+	def test_is_backCompatTo(self):
+		"""Confirm that an addon is only added if it is backwards compatible"""
+		nvdaAPIVersions = (nvdaAPIVersion2021_1, nvdaAPIVersion2021_2, nvdaAPIVersion2022_1)
 		addon = MockAddon()
 		addon.minNvdaAPIVersion = V_2021_1
 		addon.lastTestedVersion = V_2021_2
-		addon.channel = "beta"
+		addon.channel = "stable"
 		self.assertDictEqual(getLatestAddons([addon], nvdaAPIVersions), {
-			V_2020_3: {"beta": {}, "stable": {}},
-			V_2021_1: {"beta": {addon.addonId: addon}, "stable": {}},
-			V_2022_1: {"beta": {}, "stable": {}},
+			# nvdaAPIVersion.backCompatTo < addon.lastTestedVersion
+			V_2021_1: {"stable": {addon.addonId: addon}, "beta": {}},
+
+			# nvdaAPIVersion.backCompatTo == addon.lastTestedVersion
+			V_2021_2: {"stable": {addon.addonId: addon}, "beta": {}},
+
+			# nvdaAPIVersion.backCompatTo > addon.lastTestedVersion
+			V_2022_1: {"stable": {}, "beta": {}},
+		})
+
+	def test_is_compatible(self):
+		"""Confirm that an addon is only added if it is compatible with the API"""
+		nvdaAPIVersions = (nvdaAPIVersion2020_3, nvdaAPIVersion2021_1, nvdaAPIVersion2021_2)
+		addon = MockAddon()
+		addon.minNvdaAPIVersion = V_2021_1
+		addon.lastTestedVersion = V_2021_2
+		addon.channel = "stable"
+		self.assertDictEqual(getLatestAddons([addon], nvdaAPIVersions), {
+			# addon.minNvdaAPIVersion > nvdaAPIVersion.apiVer
+			V_2020_3: {"stable": {}, "beta": {}},
+
+			# addon.minNvdaAPIVersion == nvdaAPIVersion.apiVer
+			V_2021_1: {"stable": {addon.addonId: addon}, "beta": {}},
+
+			# addon.minNvdaAPIVersion < nvdaAPIVersion.apiVer
+			V_2021_2: {"stable": {addon.addonId: addon}, "beta": {}},
 		})
