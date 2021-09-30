@@ -123,6 +123,19 @@ class Test_getLatestAddons(unittest.TestCase):
 			V_2022_1: {"stable": {}, "beta": {}},
 		})
 
+	def test_same_addon_version_throws(self):
+		"""Test that two addons with the same version throws an error"""
+		nvdaAPIVersions = (nvdaAPIVersion2020_2, )
+		addon = MockAddon()
+		addon.addonId = "foo"
+		addon.minNvdaAPIVersion = V_2020_2
+		addon.lastTestedVersion = V_2020_2
+		addon.channel = "stable"
+		addon.addonVersion = MajorMinorPatch(0, 1)
+		addonCopy = deepcopy(addon)
+		with self.assertRaises(ValueError):
+			getLatestAddons([addon, addonCopy], nvdaAPIVersions)
+
 	def test_is_compatible(self):
 		"""Confirm that an addon is only added if it is compatible with the API"""
 		nvdaAPIVersions = (nvdaAPIVersion2020_3, nvdaAPIVersion2021_1, nvdaAPIVersion2021_2)

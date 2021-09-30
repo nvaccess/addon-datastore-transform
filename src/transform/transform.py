@@ -37,7 +37,17 @@ def _isAddonNewer(addons: Dict[str, Addon], addon: Addon) -> bool:
 	"""
 	Confirms that a given addon is newer than the most recent version of that addon in the addons dict.
 	"""
+	_addonVersionNotAlreadyAdded(addons, addon)
 	return addon.addonId not in addons or addon.addonVersion > addons[addon.addonId].addonVersion
+
+
+def _addonVersionNotAlreadyAdded(addons: Dict[str, Addon], addon: Addon) -> True:
+	"""
+	Throws an exception if an addon with that version has already been added to addons.
+	"""
+	if addon.addonId in addons and addon.addonVersion == addons[addon.addonId].addonVersion:
+		raise ValueError(f"Addon {addon.addonId} {addon.addonVersion} already added to addons dictionary")
+	return True
 
 
 def getLatestAddons(addons: Iterable[Addon], nvdaAPIVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
@@ -53,11 +63,14 @@ def getLatestAddons(addons: Iterable[Addon], nvdaAPIVersions: Tuple[VersionCompa
 	for addon in addons:
 		for nvdaAPIVersion in nvdaAPIVersions:
 			addonsForVersionChannel = latestAddons[nvdaAPIVersion.apiVer][addon.channel]
-			if (_isAddonCompatible(addon, nvdaAPIVersion) and _isAddonNewer(addonsForVersionChannel, addon)):
+			if (
+				_isAddonCompatible(addon, nvdaAPIVersion)
+				and _isAddonNewer(addonsForVersionChannel, addon)
+			):
 				addonsForVersionChannel[addon.addonId] = addon
-				log.debug(f"added {addon.addonId} {addon.addonVersion}")
+				log.error(f"added {addon.addonId} {addon.addonVersion}")
 			else:
-				log.debug(f"ignoring {addon.addonId} {addon.addonVersion}")
+				log.error(f"ignoring {addon.addonId} {addon.addonVersion}")
 	return latestAddons
 
 
