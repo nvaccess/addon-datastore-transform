@@ -80,13 +80,28 @@ class Test_getLatestAddons(unittest.TestCase):
 		oldAddon.channel = "stable"
 		oldAddon.pathToData = "old-path"
 		oldAddon.addonVersion = MajorMinorPatch(0, 1)
+
 		newAddon = deepcopy(oldAddon)
-		newAddon.addonVersion = MajorMinorPatch(0, 2)
+		newAddon.addonVersion = MajorMinorPatch(0, 3)
 		newAddon.minNvdaAPIVersion = V_2020_3
 		newAddon.lastTestedVersion = V_2020_3
 		newAddon.pathToData = "new-path"
+
 		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], nvdaAPIVersions), {
+			# When adding 1st addon: oldAddon.addonId not in addons
+			# When adding 2nd addon: pass as incompatible
 			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
+			# When adding 1st addon: oldAddon.addonId not in addons
+			# When adding 2nd addon: newAddon.addonVersion > oldAddon.addonVersion
+			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
+		})
+
+		self.assertDictEqual(getLatestAddons([newAddon, oldAddon], nvdaAPIVersions), {
+			# When adding 1st addon: pass as incompatible
+			# When adding 2nd addon: oldAddon.addonId not in addons
+			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
+			# When adding 1st addon: newAddon.addonId not in addons
+			# When adding 2nd addon: oldAddon.addonVersion < newAddon.addonVersion
 			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
 		})
 
