@@ -59,16 +59,6 @@ class _GenerateSystemTestData:
 			shutil.rmtree(self.testSet.outputDir)
 		self.write_nvdaAPIVersions()
 
-	def generate_testData(self):
-		"""
-		Generates system test data.
-		"""
-		self.test_addon_to_be_downgraded()
-		self.test_addon_versions()
-		self.test_stable_from_beta()
-		self.test_addon_to_be_fully_removed()
-		self.test_nvdaAPIVersions()
-
 	def write_mock_addon_to_files(self, addon: Addon, exceptedVersions: Iterable[MajorMinorPatch]):
 		addonData = {
 			"addonId": addon.addonId,
@@ -232,13 +222,13 @@ class TestTransformation(unittest.TestCase):
 	testSets: Tuple[TestSet] = (
 		TestSet(
 			id=0,
-			inputDir=os.path.join(os.path.dirname(__file__), "test_data/input/addonSet0"),
-			outputDir=os.path.join(os.path.dirname(__file__), "test_data/expected_results/addonSet0"),
+			inputDir=os.path.join(os.path.dirname(__file__), "test_data/input"),
+			outputDir=os.path.join(os.path.dirname(__file__), "test_data/expected_results"),
 		),
 		TestSet(
 			id=1,
-			inputDir=os.path.join(os.path.dirname(__file__), "test_data/input/addonSet1"),
-			outputDir=os.path.join(os.path.dirname(__file__), "test_data/expected_results/addonSet1"),
+			inputDir=os.path.join(os.path.dirname(__file__), "test_data/input"),
+			outputDir=os.path.join(os.path.dirname(__file__), "test_data/expected_results"),
 		),
 	)
 
@@ -252,17 +242,6 @@ class TestTransformation(unittest.TestCase):
 			shell=True
 		)
 		process.check_returncode()
-
-	@classmethod
-	def setUpClass(cls) -> None:
-		for testSet in cls.testSets:
-			_GenerateSystemTestData(testSet).generate_testData()
-
-	def setUp(self):
-		"""
-		Runs the transformation.
-		"""
-		self._execute_transformation(self.testSets[0])
 
 	def _check_expected_addons_added(self, expectedResultsPath: str):
 		"""
@@ -280,17 +259,60 @@ class TestTransformation(unittest.TestCase):
 				expectedResultsJson = json.load(expectedFile)
 			self.assertDictEqual(expectedResultsJson, outputFileJson, msg=outputFilename)
 
-	def test_expected_addons_added(self):
-		"""
-		Confirms the initial transformation was successful.
-		"""
-		self._check_expected_addons_added(self.testSets[0].outputDir)
-
-	def test_expected_addons_updated(self):
+	def test_addon_to_be_fully_removed(self):
 		"""
 		Confirms that a subsequent transformation is successful, and the first transformation results are
-		overwritten.
+		overwritten with a fully removed addon.
 		"""
+		_GenerateSystemTestData(self.testSets[0]).test_addon_to_be_fully_removed()
+		self._execute_transformation(self.testSets[0])
 		self._check_expected_addons_added(self.testSets[0].outputDir)
+		_GenerateSystemTestData(self.testSets[1]).test_addon_to_be_fully_removed()
+		self._execute_transformation(self.testSets[1])
+		self._check_expected_addons_added(self.testSets[1].outputDir)
+
+	def test_addon_to_be_downgraded(self):
+		"""
+		Confirms that a subsequent transformation is successful, and the first transformation results are
+		overwritten with a downgraded addon.
+		"""
+		_GenerateSystemTestData(self.testSets[0]).test_addon_to_be_downgraded()
+		self._execute_transformation(self.testSets[0])
+		self._check_expected_addons_added(self.testSets[0].outputDir)
+		_GenerateSystemTestData(self.testSets[1]).test_addon_to_be_downgraded()
+		self._execute_transformation(self.testSets[1])
+		self._check_expected_addons_added(self.testSets[1].outputDir)
+
+	def test_addon_versions(self):
+		"""
+		Confirms that the newest addon versions are used.
+		"""
+		_GenerateSystemTestData(self.testSets[0]).test_addon_versions()
+		self._execute_transformation(self.testSets[0])
+		self._check_expected_addons_added(self.testSets[0].outputDir)
+		_GenerateSystemTestData(self.testSets[1]).test_addon_versions()
+		self._execute_transformation(self.testSets[1])
+		self._check_expected_addons_added(self.testSets[1].outputDir)
+
+	def test_nvdaAPIVersions(self):
+		"""
+		Confirms that the newest addon versions are used and added to the correct NVDA API folder.
+		"""
+		_GenerateSystemTestData(self.testSets[0]).test_nvdaAPIVersions()
+		self._execute_transformation(self.testSets[0])
+		self._check_expected_addons_added(self.testSets[0].outputDir)
+		_GenerateSystemTestData(self.testSets[1]).test_nvdaAPIVersions()
+		self._execute_transformation(self.testSets[1])
+		self._check_expected_addons_added(self.testSets[1].outputDir)
+
+	def test_stable_from_beta(self):
+		"""
+		Confirms that a subsequent transformation is successful, and the first transformation results are
+		overwritten with an addon that has gone to stable from beta.
+		"""
+		_GenerateSystemTestData(self.testSets[0]).test_stable_from_beta()
+		self._execute_transformation(self.testSets[0])
+		self._check_expected_addons_added(self.testSets[0].outputDir)
+		_GenerateSystemTestData(self.testSets[1]).test_stable_from_beta()
 		self._execute_transformation(self.testSets[1])
 		self._check_expected_addons_added(self.testSets[1].outputDir)
