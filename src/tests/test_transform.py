@@ -74,18 +74,17 @@ class Test_getLatestAddons(unittest.TestCase):
 		"""
 		Ensure only the newest addon is used for a version+channel.
 
-		getLatestAddons checks addons in order, and we want to ensure
-		the addon dictionary is updated to maintain the newest addon
-		for a version+channel.
+		getLatestAddons checks addons in order, and we want to ensure the addon dictionary is updated to
+		maintain the newest addon for a version+channel.
 
-		This tests _isAddonNewer by confirming that the order of addons being added
-		does not effect the results.
+		This tests that the newest addons is always stored by confirming that the order of addons supplied
+		does not effect the output.
 		"""
-		nvdaAPIVersions = (nvdaAPIVersion2020_2, nvdaAPIVersion2020_3)
+		nvdaAPIVersions = (nvdaAPIVersion2020_3,)
 		oldAddon = MockAddon()
 		oldAddon.addonId = "foo"
-		oldAddon.minNvdaAPIVersion = V_2020_2
-		oldAddon.lastTestedVersion = V_2020_2
+		oldAddon.minNvdaAPIVersion = V_2020_3
+		oldAddon.lastTestedVersion = V_2020_3
 		oldAddon.channel = "stable"
 		oldAddon.pathToData = "old-path"
 		oldAddon.addonVersion = MajorMinorPatch(0, 1)
@@ -96,23 +95,17 @@ class Test_getLatestAddons(unittest.TestCase):
 		newAddon.lastTestedVersion = V_2020_3
 		newAddon.pathToData = "new-path"
 
-		self.assertDictEqual(getLatestAddons([oldAddon, newAddon], nvdaAPIVersions), {
-			# 1st addon is added because: oldAddon.addonId not in addons
-			# 2nd addon it not added: pass as incompatible
-			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
-			# 1st addon is added because: oldAddon.addonId not in addons
-			# 2nd addon updates it because: newAddon.addonVersion > oldAddon.addonVersion
-			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
+		addonGenerator = (addon for addon in (oldAddon, newAddon))
+		self.assertDictEqual(getLatestAddons(addonGenerator, nvdaAPIVersions), {
+			# For V_2020_3 newAddon overrides oldAddon because newAddon.addonVersion > oldAddon.addonVersion
+			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}}
 		})
 
 		# Reverse order of addons
-		self.assertDictEqual(getLatestAddons([newAddon, oldAddon], nvdaAPIVersions), {
-			# 1st addon is not added because: pass as incompatible
-			# 2nd addon is added because: oldAddon.addonId not in addons
-			V_2020_2: {"stable": {"foo": oldAddon}, "beta": {}},
-			# 1st addon is added because: newAddon.addonId not in addons
-			# 2nd addon does not update it because: oldAddon.addonVersion < newAddon.addonVersion
-			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}},
+		addonGenerator = (addon for addon in (newAddon, oldAddon))
+		self.assertDictEqual(getLatestAddons(addonGenerator, nvdaAPIVersions), {
+			# For V_2020_3 oldAddon does not override newAddon because newAddon.addonVersion < oldAddon.addonVersion
+			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}}
 		})
 
 	def test_is_backCompatTo(self):
