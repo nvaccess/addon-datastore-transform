@@ -104,7 +104,7 @@ class Test_getLatestAddons(unittest.TestCase):
 		# Reverse order of addons
 		addonGenerator = (addon for addon in (newAddon, oldAddon))
 		self.assertDictEqual(getLatestAddons(addonGenerator, nvdaAPIVersions), {
-			# For V_2020_3 oldAddon does not override newAddon because newAddon.addonVersion < oldAddon.addonVersion
+			# For V_2020_3 oldAddon does not override newAddon because newAddon.addonVersion > oldAddon.addonVersion
 			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}}
 		})
 
