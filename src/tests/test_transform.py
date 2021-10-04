@@ -70,15 +70,12 @@ class Test_getLatestAddons(unittest.TestCase):
 			V_2020_2: {"beta": {betaAddon.addonId: betaAddon}, "stable": {stableAddon.addonId: stableAddon}},
 		})
 
-	def test_isAddonNewer(self):
+	def test_addon_order_irrelevant(self):
 		"""
-		Ensure only the newest addon is used for a version+channel.
+		Confirm that the order of addons supplied does not effect the output.
 
 		getLatestAddons checks addons in order, and we want to ensure the addon dictionary is updated to
 		maintain the newest addon for a version+channel.
-
-		This tests that the newest addons is always stored by confirming that the order of addons supplied
-		does not effect the output.
 		"""
 		nvdaAPIVersions = (nvdaAPIVersion2020_3,)
 		oldAddon = MockAddon()
@@ -91,22 +88,29 @@ class Test_getLatestAddons(unittest.TestCase):
 
 		newAddon = deepcopy(oldAddon)
 		newAddon.addonVersion = MajorMinorPatch(0, 3)
-		newAddon.minNvdaAPIVersion = V_2020_3
-		newAddon.lastTestedVersion = V_2020_3
 		newAddon.pathToData = "new-path"
 
-		addonGenerator = (addon for addon in (oldAddon, newAddon))
-		self.assertDictEqual(getLatestAddons(addonGenerator, nvdaAPIVersions), {
-			# For V_2020_3 newAddon overrides oldAddon because newAddon.addonVersion > oldAddon.addonVersion
-			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}}
-		})
+		self.assertDictEqual(
+			getLatestAddons([oldAddon, newAddon], nvdaAPIVersions),
+			getLatestAddons([newAddon, oldAddon], nvdaAPIVersions)
+		)
 
-		# Reverse order of addons
-		addonGenerator = (addon for addon in (newAddon, oldAddon))
-		self.assertDictEqual(getLatestAddons(addonGenerator, nvdaAPIVersions), {
-			# For V_2020_3 oldAddon does not override newAddon because newAddon.addonVersion > oldAddon.addonVersion
-			V_2020_3: {"stable": {"foo": newAddon}, "beta": {}}
-		})
+	def test_nvdaAPIVersions_order_irrelevant(self):
+		"""
+		Confirm that the order of API versions supplied does not effect the output.
+		"""
+		addon = MockAddon()
+		addon.addonId = "foo"
+		addon.minNvdaAPIVersion = V_2020_2
+		addon.lastTestedVersion = V_2020_3
+		addon.channel = "stable"
+		addon.pathToData = "old-path"
+		addon.addonVersion = MajorMinorPatch(0, 1)
+
+		self.assertDictEqual(
+			getLatestAddons([addon], (nvdaAPIVersion2020_3, nvdaAPIVersion2020_2)),
+			getLatestAddons([addon], (nvdaAPIVersion2020_2, nvdaAPIVersion2020_3))
+		)
 
 	def test_is_backCompatTo(self):
 		"""Confirm that an addon is only added if it is backwards compatible"""
