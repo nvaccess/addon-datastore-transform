@@ -8,6 +8,7 @@ Confirms the end result data is as expected.
 Creates a number of specific scenarios for the test data.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass
 import json
 import glob
@@ -119,48 +120,14 @@ class _GenerateSystemTestData:
 
 		if self.testSet.id == 0:
 			# version to be downgraded, removed in the second set
-			addon = MockAddon()
-			addon.addonId = "downgraded"
+			addon = deepcopy(addon)
 			addon.addonVersion = MajorMinorPatch(1, 1, 1)
 			addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
 			addon.lastTestedVersion = MajorMinorPatch(2021, 1)
-			addon.channel = "stable"
 			self.write_mock_addon_to_files(
 				addon,
 				{MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4), MajorMinorPatch(2021, 1)}
 			)
-
-	def test_addon_versions(self):
-		"""Creates addon data to test the newest available addon version is used"""
-		# legacy version, to remain unlisted
-		addon = MockAddon()
-		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = MajorMinorPatch(1, 9)
-		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
-		addon.lastTestedVersion = MajorMinorPatch(2020, 2)
-		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, set())
-
-		# older version
-		addon = MockAddon()
-		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = MajorMinorPatch(2, 1)
-		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
-		addon.lastTestedVersion = MajorMinorPatch(2020, 4)
-		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 1), MajorMinorPatch(2020, 2)})
-
-		# newer version
-		addon = MockAddon()
-		addon.addonId = "legacyOldNewAddon"
-		addon.addonVersion = MajorMinorPatch(13, 0)
-		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
-		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
-		addon.channel = "stable"
-		expectedVersions = {MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4), MajorMinorPatch(2021, 1)}
-		if self.testSet.id == 1:
-			expectedVersions.add(MajorMinorPatch(2021, 2))
-		self.write_mock_addon_to_files(addon, expectedVersions)
 
 	def test_stable_from_beta(self):
 		"""Generates a beta addon for the first set, and the equivalent stable addon for the second
@@ -177,45 +144,18 @@ class _GenerateSystemTestData:
 		)
 
 	def test_nvdaAPIVersions(self):
-		"""Creates addon data to test that the newest addon is used across various NVDA versions"""
-		# older NVDA
+		"""Creates addon data to test that an addon is written across the correct NVDA versions"""
 		addon = MockAddon()
 		addon.addonId = "_test_nvdaAPIVersions"
 		addon.addonVersion = MajorMinorPatch(1, 0)
 		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 1)
-		addon.lastTestedVersion = MajorMinorPatch(2020, 3)
+		addon.lastTestedVersion = MajorMinorPatch(2020, 2)
 		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 1)})
-
-		# middle NVDA Versions
-		addon = MockAddon()
-		addon.addonId = "_test_nvdaAPIVersions"
-		addon.addonVersion = MajorMinorPatch(1, 1)
-		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 2)
-		addon.lastTestedVersion = MajorMinorPatch(2020, 4)
-		addon.channel = "stable"
-		self.write_mock_addon_to_files(addon, {MajorMinorPatch(2020, 2)})
-
-		# newer NVDA versions
-		addon = MockAddon()
-		addon.addonId = "_test_nvdaAPIVersions"
-		addon.addonVersion = MajorMinorPatch(1, 2)
-		addon.minNvdaAPIVersion = MajorMinorPatch(2020, 3)
-		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
-		addon.channel = "stable"
-		expectedVersions = {MajorMinorPatch(2020, 3), MajorMinorPatch(2020, 4)}
-		if self.testSet.id == 0:
-			expectedVersions.add(MajorMinorPatch(2021, 1))
-		self.write_mock_addon_to_files(addon, expectedVersions)
-
-		if self.testSet.id == 1:
-			addon = MockAddon()
-			addon.addonId = "_test_nvdaAPIVersions"
-			addon.addonVersion = MajorMinorPatch(1, 3)
-			addon.minNvdaAPIVersion = MajorMinorPatch(2021, 1)
-			addon.lastTestedVersion = MajorMinorPatch(2021, 2)
-			addon.channel = "stable"
-			self.write_mock_addon_to_files(addon, (MajorMinorPatch(2021, 1), MajorMinorPatch(2021, 2)))
+		self.write_mock_addon_to_files(addon, {
+			MajorMinorPatch(2020, 1),
+			MajorMinorPatch(2020, 2),
+			MajorMinorPatch(2020, 3),
+		})
 
 
 class TestTransformation(unittest.TestCase):
@@ -280,17 +220,6 @@ class TestTransformation(unittest.TestCase):
 		self._execute_transformation(self.testSets[0])
 		self._check_expected_addons_added(self.testSets[0].outputDir)
 		_GenerateSystemTestData(self.testSets[1]).test_addon_to_be_downgraded()
-		self._execute_transformation(self.testSets[1])
-		self._check_expected_addons_added(self.testSets[1].outputDir)
-
-	def test_addon_versions(self):
-		"""
-		Confirms that the newest addon versions are used.
-		"""
-		_GenerateSystemTestData(self.testSets[0]).test_addon_versions()
-		self._execute_transformation(self.testSets[0])
-		self._check_expected_addons_added(self.testSets[0].outputDir)
-		_GenerateSystemTestData(self.testSets[1]).test_addon_versions()
 		self._execute_transformation(self.testSets[1])
 		self._check_expected_addons_added(self.testSets[1].outputDir)
 
