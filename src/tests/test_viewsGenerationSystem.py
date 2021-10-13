@@ -132,13 +132,13 @@ class TestTransformation(unittest.TestCase):
 		return transformProcess
 
 	def test_transform_empty(self):
-		"""Confirms an empty transformation is successful
+		"""Confirms an empty transformation exits with a zero exit code (successful).
 		"""
 		write_nvdaAPIVersions()
 		self.runTransformation()
 
 	def test_transform_successfully(self):
-		"""Confirms a transformation of a single addon runs successfully
+		"""Confirms a transformation of a single addon exits with a zero exit code (successful).
 		"""
 		write_nvdaAPIVersions(nvdaAPIVersionsJson("2021.1.0", backCompatTo="2021.1.0"))
 		write_addons(addonJson('foo/0.1.1.json', "stable", required="2021.1.0", tested="2021.1.0"))
@@ -170,7 +170,7 @@ class TestTransformation(unittest.TestCase):
 		self.assertEqual(expectedAddonVersionStr, str(addonVersion))
 
 	def test_output_file_structure_matches_expected(self):
-		"""Confirms that a successful transform of multiple addons is written as expected."""
+		"""Confirms that a transform of multiple addon versions is written as expected."""
 		write_nvdaAPIVersions(
 			nvdaAPIVersionsJson("2020.1.0", backCompatTo="2020.1.0"),
 			nvdaAPIVersionsJson("2020.2.0", backCompatTo="2020.2.0"),
