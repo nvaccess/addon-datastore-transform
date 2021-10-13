@@ -78,8 +78,9 @@ class TestTransformation(unittest.TestCase):
 		if Path(DATA_DIR._root.value).exists():
 			shutil.rmtree(DATA_DIR._root.value)
 
-	def _test_transform(self) -> subprocess.CompletedProcess:
+	def runTransformation(self) -> subprocess.CompletedProcess:
 		"""Generates NVDA API versions so that transform can run.
+		Runs the transformation and raises a CalledProcessError on failure.
 		"""
 		_TestDataGenerator.write_nvdaAPIVersions()
 		transformProcess = subprocess.run(
@@ -93,7 +94,7 @@ class TestTransformation(unittest.TestCase):
 	def test_transform_empty(self):
 		"""Confirms an empty transformation is successful
 		"""
-		self._test_transform()
+		self.runTransformation()
 
 	def test_transform_successfully(self):
 		"""Confirms a transformation of a single addon runs successfully
@@ -107,7 +108,7 @@ class TestTransformation(unittest.TestCase):
 		addon.channel = "stable"
 		_TestDataGenerator.write_mock_addon_to_input_dir(addon)
 
-		self._test_transform()
+		self.runTransformation()
 
 	def test_throw_error_on_nonempty_output_folder(self):
 		"""Confirms using an existing output directory throws an error
@@ -116,7 +117,7 @@ class TestTransformation(unittest.TestCase):
 		Path(DATA_DIR.OUTPUT.value).mkdir(parents=True, exist_ok=True)
 		
 		with self.assertRaises(subprocess.CalledProcessError) as transformError:
-			self._test_transform()
+			self.runTransformation()
 		doubleEscapedDir = DATA_DIR.OUTPUT.replace('\\', '\\\\')  # stderr escapes all the backslashes twice
 		self.assertIn(
 			"FileExistsError: [WinError 183] Cannot create a file when that file already exists: "
@@ -125,6 +126,7 @@ class TestTransformation(unittest.TestCase):
 		)
 
 	def _assertAddonDataWritten(self, expectedPathToAddon: str, expectedAddonVersion: MajorMinorPatch):
+		"""Confirms that an addon is written to a path and has an expected version."""
 		self.assertTrue(Path(expectedPathToAddon).exists())
 		with open(expectedPathToAddon, "r") as expectedAddon:
 			addonData = json.load(expectedAddon)
@@ -148,9 +150,9 @@ class TestTransformation(unittest.TestCase):
 		addon.lastTestedVersion = MajorMinorPatch(2021, 1)
 		_TestDataGenerator.write_mock_addon_to_input_dir(addon)
 
-		self._test_transform()
-		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), 3)
+		self.runTransformation()
 
+		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), 3)
 		self._assertAddonDataWritten(
 			os.path.join(DATA_DIR.OUTPUT, '2020.1.0', addon.addonId, 'stable.json'),
 			MajorMinorPatch(2, 1)
