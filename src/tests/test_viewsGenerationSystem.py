@@ -48,8 +48,6 @@ class _TestDataGenerator:
 			"lastTestedVersion": addon.lastTestedVersion._asdict(),
 			"channel": addon.channel,
 		}
-		# addonData["minNVDAVersion"]["patch"] = 0
-		# addonData["lastTestedVersion"]["patch"] = 0
 		addonWritePath = os.path.join(DATA_DIR.INPUT, addon.addonId)
 		Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 		with open(f"{addonWritePath}/{str(addon.addonVersion)}.json", "w") as addonFile:
@@ -134,7 +132,7 @@ class TestTransformation(unittest.TestCase):
 
 	def test_output_file_structure_matches_expected(self):
 		"""Confirms that a successful transform of multiple addons is written as expected."""
-		# oldest version, to remain unlisted
+		# older version
 		addon = MockAddon()
 		addon.addonId = "multipleVersionsAddon"
 		addon.channel = "stable"
