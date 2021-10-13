@@ -149,14 +149,15 @@ class TestTransformation(unittest.TestCase):
 		"""
 		# Make the folder before transform
 		Path(DATA_DIR.OUTPUT.value).mkdir(parents=True, exist_ok=True)
-		
+		write_nvdaAPIVersions()
 		with self.assertRaises(subprocess.CalledProcessError) as transformError:
-			write_nvdaAPIVersions()
 			self.runTransformation()
+
 		doubleEscapedDir = DATA_DIR.OUTPUT.replace('\\', '\\\\')  # stderr escapes all the backslashes twice
 		self.assertIn(
 			"FileExistsError: [WinError 183] Cannot create a file when that file already exists: "
 			f"'{doubleEscapedDir}'",
+			# requires that runTransformation and child processes log errors to stderr
 			transformError.exception.stderr.decode("utf-8")
 		)
 
