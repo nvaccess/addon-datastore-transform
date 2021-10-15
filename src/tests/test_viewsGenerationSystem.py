@@ -7,6 +7,7 @@ Runs the dataView generation system on test data.
 Creates a number of specific scenarios for running the transformation.
 """
 
+from dataclasses import dataclass
 from enum import Enum
 import json
 import glob
@@ -15,7 +16,7 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Iterator, Tuple
+from typing import Iterator
 from src.transform.datastructures import MajorMinorPatch
 import subprocess
 import unittest
@@ -32,7 +33,19 @@ class DATA_DIR(str, Enum):
 	nvdaAPIVersionsPath = os.path.join(INPUT, "nvdaAPIVersions.json")
 
 
-def addonJson(path: str, channel: str, *, required: str, tested: str) -> str:
+@dataclass
+class InputAddonVersion:
+	path: str
+	addonDataBlob: str
+
+
+@dataclass
+class ExpectedAddonVersion:
+	path: str
+	addonVersion: str
+
+
+def addonJson(path: str, channel: str, *, required: str, tested: str) -> InputAddonVersion:
 	"""
 	path should be of the form: `addonName/addonVersionString.json`, eg `nvdaOcr/13.1.0.json`
 	All version strings should be of the form major.minor.patch.
@@ -48,7 +61,7 @@ def addonJson(path: str, channel: str, *, required: str, tested: str) -> str:
 	minVersion = versionNumRegex.match(required)
 	testedVersion = versionNumRegex.match(tested)
 
-	return path, f'''
+	return InputAddonVersion(path, f'''
 	{{
 		"addonId": "{addonId}",
 		"channel": "{channel}",
@@ -67,17 +80,17 @@ def addonJson(path: str, channel: str, *, required: str, tested: str) -> str:
 			"minor": {testedVersion.group(2)},
 			"patch": {testedVersion.group(3)}
 		}}
-	}}\n'''
+	}}\n''')
 
 
-def write_addons(*addons: Tuple[str, str]):
+def write_addons(*addons: InputAddonVersion):
 	"""Write mock addon data to the input directory.
 	Arguments should be tuples of the form (path, addonDataBlob)"""
-	for path, addonDataBlob in addons:
-		addonWritePath = os.path.join(DATA_DIR.INPUT, path)
+	for addon in addons:
+		addonWritePath = os.path.join(DATA_DIR.INPUT, addon.path)
 		Path(os.path.dirname(addonWritePath)).mkdir(parents=True, exist_ok=True)
 		with open(addonWritePath, "w") as addonFile:
-			addonFile.write(addonDataBlob)
+			addonFile.write(addon.addonDataBlob)
 
 
 def nvdaAPIVersionsJson(apiVersion: str, *, backCompatTo: str) -> Iterator[str]:
@@ -161,17 +174,17 @@ class TestTransformation(unittest.TestCase):
 			transformError.exception.stderr.decode("utf-8")
 		)
 
-	def _assertAddonDataWritten(self, *addonData: Tuple[str, str]):
+	def _assertAddonDataWritten(self, *expectedAddons: ExpectedAddonVersion):
 		"""Confirms that an addon is written to a path and the file contains an expected version.
 		Arguments should be tuples of the form (expectedPathToAddon, expectedAddonVersionStr)"""
-		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), len(addonData))
-		for expectedPathToAddon, expectedAddonVersionStr in addonData:
-			fullPathToAddon = os.path.join(DATA_DIR.OUTPUT, expectedPathToAddon)
+		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), len(expectedAddons))
+		for expectedAddon in expectedAddons:
+			fullPathToAddon = os.path.join(DATA_DIR.OUTPUT, expectedAddon.path)
 			self.assertTrue(Path(fullPathToAddon).exists())
 			with open(fullPathToAddon, "r") as expectedAddonFile:
 				addonData = json.load(expectedAddonFile)
 			addonVersion = MajorMinorPatch(**addonData["addonVersionNumber"])
-			self.assertEqual(expectedAddonVersionStr, str(addonVersion))
+			self.assertEqual(expectedAddon.addonVersion, str(addonVersion))
 
 	def test_output_file_structure_matches_expected(self):
 		"""Confirms that a transform of multiple addon versions is written as expected.
@@ -193,8 +206,8 @@ class TestTransformation(unittest.TestCase):
 		)
 		self.runTransformation()
 		self._assertAddonDataWritten(
-			('2020.1.0/oldNewAddon/stable.json', '2.1.0'),
-			('2020.2.0/oldNewAddon/stable.json', '13.0.0'),  # overrides 2.1.0
-			('2021.1.0/oldNewAddon/stable.json', '13.0.0'),
-			('2021.1.0/betaAddon/beta.json', '0.0.1'),
+			ExpectedAddonVersion('2020.1.0/oldNewAddon/stable.json', '2.1.0'),
+			ExpectedAddonVersion('2020.2.0/oldNewAddon/stable.json', '13.0.0'),  # overrides 2.1.0
+			ExpectedAddonVersion('2021.1.0/oldNewAddon/stable.json', '13.0.0'),
+			ExpectedAddonVersion('2021.1.0/betaAddon/beta.json', '0.0.1'),
 		)
