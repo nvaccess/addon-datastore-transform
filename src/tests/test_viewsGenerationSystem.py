@@ -161,29 +161,40 @@ class TestTransformation(unittest.TestCase):
 			transformError.exception.stderr.decode("utf-8")
 		)
 
-	def _assertAddonDataWritten(self, expectedPathToAddon: str, expectedAddonVersionStr: str):
-		"""Confirms that an addon is written to a path and the file contains an expected version."""
-		fullPathToAddon = os.path.join(DATA_DIR.OUTPUT, expectedPathToAddon)
-		self.assertTrue(Path(fullPathToAddon).exists())
-		with open(fullPathToAddon, "r") as expectedAddonFile:
-			addonData = json.load(expectedAddonFile)
-		addonVersion = MajorMinorPatch(**addonData["addonVersionNumber"])
-		self.assertEqual(expectedAddonVersionStr, str(addonVersion))
+	def _assertAddonDataWritten(self, *addonData: Tuple[str, str]):
+		"""Confirms that an addon is written to a path and the file contains an expected version.
+		Arguments should be tuples of the form (expectedPathToAddon, expectedAddonVersionStr)"""
+		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), len(addonData))
+		for expectedPathToAddon, expectedAddonVersionStr in addonData:
+			fullPathToAddon = os.path.join(DATA_DIR.OUTPUT, expectedPathToAddon)
+			self.assertTrue(Path(fullPathToAddon).exists())
+			with open(fullPathToAddon, "r") as expectedAddonFile:
+				addonData = json.load(expectedAddonFile)
+			addonVersion = MajorMinorPatch(**addonData["addonVersionNumber"])
+			self.assertEqual(expectedAddonVersionStr, str(addonVersion))
 
 	def test_output_file_structure_matches_expected(self):
-		"""Confirms that a transform of multiple addon versions is written as expected."""
+		"""Confirms that a transform of multiple addon versions is written as expected.
+		Cases include:
+		  - Multiple addons
+		  - Multiple NVDA versions, including breaking API versions
+		  - A beta addon
+		  - A newer version of an addon which overrides an older version for the same NVDA API version
+		"""
 		write_nvdaAPIVersions(
 			nvdaAPIVersionsJson("2020.1.0", backCompatTo="2020.1.0"),
 			nvdaAPIVersionsJson("2020.2.0", backCompatTo="2020.2.0"),
 			nvdaAPIVersionsJson("2021.1.0", backCompatTo="2021.1.0"),
 		)
 		write_addons(
-			addonJson("testAddon/2.1.0.json", "stable", required="2020.1.0", tested="2020.2.0"),
-			addonJson("testAddon/13.0.0.json", "stable", required="2020.2.0", tested="2021.1.0"),
+			addonJson("oldNewAddon/2.1.0.json", "stable", required="2020.1.0", tested="2020.2.0"),
+			addonJson("oldNewAddon/13.0.0.json", "stable", required="2020.2.0", tested="2021.1.0"),
+			addonJson("betaAddon/0.0.1.json", "beta", required="2021.1.0", tested="2021.1.0"),
 		)
 		self.runTransformation()
-
-		self.assertEqual(len(glob.glob(f"{DATA_DIR.OUTPUT}/**/**.json", recursive=True)), 3)
-		self._assertAddonDataWritten('2020.1.0/testAddon/stable.json', '2.1.0')
-		self._assertAddonDataWritten('2020.2.0/testAddon/stable.json', '13.0.0')
-		self._assertAddonDataWritten('2021.1.0/testAddon/stable.json', '13.0.0')
+		self._assertAddonDataWritten(
+			('2020.1.0/oldNewAddon/stable.json', '2.1.0'),
+			('2020.2.0/oldNewAddon/stable.json', '13.0.0'),  # overrides 2.1.0
+			('2021.1.0/oldNewAddon/stable.json', '13.0.0'),
+			('2021.1.0/betaAddon/beta.json', '0.0.1'),
+		)
