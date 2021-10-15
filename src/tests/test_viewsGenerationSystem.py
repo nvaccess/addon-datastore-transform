@@ -177,7 +177,7 @@ class TestTransformation(unittest.TestCase):
 		"""Confirms that a transform of multiple addon versions is written as expected.
 		Cases include:
 		  - Multiple addons
-		  - Multiple NVDA versions, including breaking API versions
+		  - Multiple NVDA API versions, including breaking API versions
 		  - A beta addon
 		  - A newer version of an addon which overrides an older version for the same NVDA API version
 		"""
