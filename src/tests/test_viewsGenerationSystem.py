@@ -16,7 +16,6 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Iterator
 from src.transform.datastructures import MajorMinorPatch
 import subprocess
 import unittest
@@ -30,7 +29,7 @@ class DATA_DIR(str, Enum):
 	_root = os.path.join(os.path.dirname(__file__), "test_data")
 	INPUT = os.path.join(_root, "input")
 	OUTPUT = os.path.join(_root, "output")
-	nvdaAPIVersionsPath = os.path.join(INPUT, "nvdaAPIVersions.json")
+	nvdaAPIVersionsPath = os.path.join(os.path.dirname(__file__), "..", "..", "nvdaAPIVersions.json")
 
 
 @dataclass
@@ -93,33 +92,6 @@ def write_addons(*addons: InputAddonVersion):
 			addonFile.write(addon.addonDataBlob)
 
 
-def nvdaAPIVersionsJson(apiVersion: str, *, backCompatTo: str) -> Iterator[str]:
-	apiVersion = versionNumRegex.match(apiVersion)
-	backCompactTo = versionNumRegex.match(backCompatTo)
-	return f'''
-	{{
-		"description": "{apiVersion}",
-		"apiVer": {{
-			"major": {apiVersion.group(1)},
-			"minor": {apiVersion.group(2)},
-			"patch": {apiVersion.group(3)}
-		}},
-		"backCompatTo": {{
-			"major": {backCompactTo.group(1)},
-			"minor": {backCompactTo.group(2)},
-			"patch": {backCompactTo.group(3)}
-		}}
-	}}
-	'''
-
-
-def write_nvdaAPIVersions(*nvdaAPIVersionsBlobs: str):
-	"""Write mock NVDA API Versions json blobs to the input nvdaAPIVersions json file."""
-	Path(DATA_DIR.INPUT.value).mkdir(parents=True, exist_ok=True)
-	with open(DATA_DIR.nvdaAPIVersionsPath.value, "w") as nvdaAPIVersionFile:
-		nvdaAPIVersionFile.write("[\n" + ',\n'.join(nvdaAPIVersionsBlobs) + "\n]")
-
-
 class TestTransformation(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -147,14 +119,12 @@ class TestTransformation(unittest.TestCase):
 	def test_transform_empty(self):
 		"""Confirms an empty transformation exits with a zero exit code (successful).
 		"""
-		write_nvdaAPIVersions()
 		self.runTransformation()
 
 	def test_transform_successfully(self):
 		"""Confirms a transformation of a single addon exits with a zero exit code (successful).
 		"""
-		write_nvdaAPIVersions(nvdaAPIVersionsJson("2021.1.0", backCompatTo="2021.1.0"))
-		write_addons(addonJson('foo/0.1.1.json', "stable", required="2021.1.0", tested="2021.1.0"))
+		write_addons(addonJson('foo/0.1.1.json', "stable", required="2020.1.0", tested="2020.1.0"))
 		self.runTransformation()
 
 	def test_throw_error_on_nonempty_output_folder(self):
@@ -162,7 +132,6 @@ class TestTransformation(unittest.TestCase):
 		"""
 		# Make the folder before transform
 		Path(DATA_DIR.OUTPUT.value).mkdir(parents=True, exist_ok=True)
-		write_nvdaAPIVersions()
 		with self.assertRaises(subprocess.CalledProcessError) as transformError:
 			self.runTransformation()
 
@@ -190,24 +159,21 @@ class TestTransformation(unittest.TestCase):
 		"""Confirms that a transform of multiple addon versions is written as expected.
 		Cases include:
 		  - Multiple addons
-		  - Multiple NVDA API versions, including breaking API versions
+		  - Multiple NVDA API versions
 		  - A beta addon
 		  - A newer version of an addon which overrides an older version for the same NVDA API version
 		"""
-		write_nvdaAPIVersions(
-			nvdaAPIVersionsJson("2020.1.0", backCompatTo="2020.1.0"),
-			nvdaAPIVersionsJson("2020.2.0", backCompatTo="2020.2.0"),
-			nvdaAPIVersionsJson("2021.1.0", backCompatTo="2021.1.0"),
-		)
 		write_addons(
-			addonJson("oldNewAddon/2.1.0.json", "stable", required="2020.1.0", tested="2020.2.0"),
-			addonJson("oldNewAddon/13.0.0.json", "stable", required="2020.2.0", tested="2021.1.0"),
-			addonJson("betaAddon/0.0.1.json", "beta", required="2021.1.0", tested="2021.1.0"),
+			addonJson("oldNewAddon/2.1.0.json", "stable", required="2020.2.0", tested="2020.3.0"),
+			addonJson("oldNewAddon/13.0.0.json", "stable", required="2020.3.0", tested="2020.4.0"),
+			addonJson("betaStableAddon/0.0.1.json", "stable", required="2020.4.0", tested="2020.4.0"),
+			addonJson("betaStableAddon/0.0.2.json", "beta", required="2020.4.0", tested="2020.4.0"),
 		)
 		self.runTransformation()
 		self._assertAddonDataWritten(
-			ExpectedAddonVersion('2020.1.0/oldNewAddon/stable.json', '2.1.0'),
-			ExpectedAddonVersion('2020.2.0/oldNewAddon/stable.json', '13.0.0'),  # overrides 2.1.0
-			ExpectedAddonVersion('2021.1.0/oldNewAddon/stable.json', '13.0.0'),
-			ExpectedAddonVersion('2021.1.0/betaAddon/beta.json', '0.0.1'),
+			ExpectedAddonVersion('2020.2.0/oldNewAddon/stable.json', '2.1.0'),
+			ExpectedAddonVersion('2020.3.0/oldNewAddon/stable.json', '13.0.0'),  # overrides 2.1.0
+			ExpectedAddonVersion('2020.4.0/oldNewAddon/stable.json', '13.0.0'),
+			ExpectedAddonVersion('2020.4.0/betaStableAddon/stable.json', '0.0.1'),
+			ExpectedAddonVersion('2020.4.0/betaStableAddon/beta.json', '0.0.2'),
 		)
