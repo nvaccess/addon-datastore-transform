@@ -58,7 +58,7 @@ python -m src.validate {pathToSchema} {pathToDataFile}
 ### Supported NVDA versions
 
 The transformation creates a projection of the add-on metadata for each [NVDA Add-on API Version](https://github.com/nvaccess/addon-datastore-transform/blob/main/nvdaAPIVersions.json).
-Patch releases of NVDa also need to be added.
+Patch releases of NVDA also need to be added.
 Older versions of NVDA won't have the add-on store built in, but projections for these older versions of the NVDA add-on API can be be browsed or rehosted elsewhere, to be used for earlier NVDA versions.
 
 For all NVDA versions older than NVDA 2019.3, the NVDA API version is `0.0.0`.
