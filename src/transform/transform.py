@@ -101,8 +101,8 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 				Path(latestAddonWriteDir).mkdir(parents=True, exist_ok=True)
 				latestAddonWritePath = f"{latestAddonWriteDir}/{channel}.json"
 				if latestAddonWritePath not in latestAddonWritePaths:
+					latestAddonWritePaths.add(latestAddonWritePath)
 					with open(latestAddonWritePath, "w") as latestAddonFile:
-						latestAddonWritePaths.add(latestAddonWritePath)
 						json.dump(addonData, latestAddonFile)
 
 
