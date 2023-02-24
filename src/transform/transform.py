@@ -86,6 +86,11 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 	"""
 	latestAddonWritePaths: Set[str] = set()
 	for nvdaAPIVersion in sorted(addons.keys(), reverse=True):
+		# To generate the 'latest view',
+		# check each api version, starting with the latest.
+		# For a given 'latest' addon write path,
+		# store the path when the path is first encountered.
+		# This ensures the latest path is returned.
 		for channel in addons[nvdaAPIVersion]:
 			for addonName in addons[nvdaAPIVersion][channel]:
 				addon = addons[nvdaAPIVersion][channel][addonName]
