@@ -123,11 +123,13 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 					addonWritePath = f"{addonDir}/{lang}/{str(nvdaAPIVersion)}/{addonName}"
 					addonData["displayName"] = translation["displayName"]
 					addonData["description"] = translation["description"]
+					Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 					with open(f"{addonWritePath}/{channel}.json", "w") as newAddonFile:
 						validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
 						json.dump(addonData, newAddonFile)
 					if addLatest:
 						latestAddonWritePath = f"{addonDir}/{lang}/latest/{addonName}"
+						Path(latestAddonWritePath).mkdir(parents=True, exist_ok=True)
 						with open(f"{latestAddonWritePath}/{channel}.json", "w") as newAddonFile:
 							validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
 							json.dump(addonData, newAddonFile)
