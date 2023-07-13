@@ -97,7 +97,8 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 				addonWritePath = f"{addonDir}/en/{str(nvdaAPIVersion)}/{addonName}"
 				with open(addon.pathToData, "r") as oldAddonFile:
 					addonData = json.load(oldAddonFile)
-					del addonData["translations"]
+					if "translations" in addonData:
+						del addonData["translations"]
 				Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 				with open(f"{addonWritePath}/{channel}.json", "w") as newAddonFile:
 					validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
