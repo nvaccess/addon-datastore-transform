@@ -119,7 +119,7 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 						json.dump(addonData, latestAddonFile)
 
 				for translation in addon.translations:
-					lang = addonData['language']
+					lang = translation['language']
 					addonWritePath = f"{addonDir}/{lang}/{str(nvdaAPIVersion)}/{addonName}"
 					addonData["displayName"] = translation["displayName"]
 					addonData["description"] = translation["description"]
