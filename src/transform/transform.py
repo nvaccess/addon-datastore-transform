@@ -56,7 +56,7 @@ def _addonVersionNotAlreadyAdded(addons: Dict[str, Addon], addon: Addon) -> True
 
 
 def getSupportedLanguages(addons: WriteableAddons) -> Set[str]:
-	supportedLanguages: Set[str] = {}
+	supportedLanguages: Set[str] = set()
 	for apiVersion in addons:
 		for channel in addons[apiVersion]:
 			for addonId in addons[apiVersion][channel]:
