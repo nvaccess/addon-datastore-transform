@@ -55,6 +55,14 @@ def _addonVersionNotAlreadyAdded(addons: Dict[str, Addon], addon: Addon) -> True
 	return True
 
 
+def getSupportedLanguages(addons: WriteableAddons) -> Set[str]:
+	supportedLanguages: Set[str] = {}
+	for apiVersion in addons:
+		for channel in addons[apiVersion]:
+			for addonId in addons[apiVersion][channel]:
+				supportedLanguages.update(t["language"] for t in addons[apiVersion][channel][addonId].translations)
+
+
 def getLatestAddons(addons: Iterable[Addon], nvdaAPIVersions: Tuple[VersionCompatibility]) -> WriteableAddons:
 	"""
 	Given a set of addons and NVDA versions, create a dictionary mapping each nvdaAPIVersion and channel
@@ -79,7 +87,7 @@ def getLatestAddons(addons: Iterable[Addon], nvdaAPIVersions: Tuple[VersionCompa
 	return latestAddons
 
 
-def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
+def writeAddons(addonDir: str, addons: WriteableAddons, supportedLanguages: Set[str]) -> None:
 	"""
 	Given a unique mapping of (nvdaAPIVersion, channel) -> addon, write the addons to file.
 	Throws a ValidationError and exits if writeable data does not match expected schema.
@@ -96,7 +104,7 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 				addon = addons[nvdaAPIVersion][channel][addonName]
 				addonWritePath = f"{addonDir}/en/{str(nvdaAPIVersion)}/{addonName}"
 				with open(addon.pathToData, "r") as oldAddonFile:
-					addonData = json.load(oldAddonFile)
+					addonData: Dict = json.load(oldAddonFile)
 					if "translations" in addonData:
 						del addonData["translations"]
 				Path(addonWritePath).mkdir(parents=True, exist_ok=True)
@@ -118,11 +126,18 @@ def writeAddons(addonDir: str, addons: WriteableAddons) -> None:
 					with open(f"{latestAddonWritePath}/{channel}.json", "w") as latestAddonFile:
 						json.dump(addonData, latestAddonFile)
 
-				for translation in addon.translations:
-					lang = translation['language']
+				addonTranslations = {t["language"]: t for t in addon.translations}
+				translatedAddonData = addonData.copy()
+				for lang in supportedLanguages:
 					addonWritePath = f"{addonDir}/{lang}/{str(nvdaAPIVersion)}/{addonName}"
-					addonData["displayName"] = translation["displayName"]
-					addonData["description"] = translation["description"]
+					if lang in addonTranslations:
+						# update with translated version
+						translatedAddonData["displayName"] = addonTranslations[lang]["displayName"]
+						translatedAddonData["description"] = addonTranslations[lang]["description"]
+					else:
+						# update with english
+						translatedAddonData["displayName"] = addonData["displayName"]
+						translatedAddonData["description"] = addonData["description"]
 					Path(addonWritePath).mkdir(parents=True, exist_ok=True)
 					with open(f"{addonWritePath}/{channel}.json", "w") as newAddonFile:
 						validateJson(addonData, JSONSchemaPaths.ADDON_DATA)
@@ -185,4 +200,5 @@ def runTransformation(nvdaAPIVersionsPath: str, sourceDir: str, outputDir: str) 
 	Path(outputDir).mkdir(parents=True, exist_ok=False)
 	nvdaAPIVersionInfo = readnvdaAPIVersionInfo(nvdaAPIVersionsPath)
 	latestAddons = getLatestAddons(readAddons(sourceDir), nvdaAPIVersionInfo)
-	writeAddons(outputDir, latestAddons)
+	supportedLanguages = getSupportedLanguages(latestAddons)
+	writeAddons(outputDir, latestAddons, supportedLanguages)
